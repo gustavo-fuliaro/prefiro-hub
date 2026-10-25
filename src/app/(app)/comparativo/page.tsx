@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Avatar } from "@/components/avatar";
+import { IconeAbaixo } from "@/components/icones";
+import { Estrela } from "@/components/marca";
 import { GraficoLinhas, type SerieLinha } from "@/components/grafico-linhas";
 import { crescimentoAcumulado, participacoes, resumir } from "@/lib/comparativo";
 import { carregarComparativo, diasAtras, hojeSP } from "@/lib/dados-comparativo";
@@ -58,8 +60,9 @@ export default async function ComparativoPage({ searchParams }: { searchParams: 
 
   const Th = ({ campo, children }: { campo: keyof typeof ORDENS; children: React.ReactNode }) => (
     <th className="px-4 py-3 text-right font-semibold">
-      <Link href={link({ ordem: campo })} className={ordem === campo ? "text-accent" : "hover:text-ink"} aria-current={ordem === campo ? "true" : undefined}>
-        {children}{ordem === campo ? " ↓" : ""}
+      <Link href={link({ ordem: campo })} className={`inline-flex items-center justify-end gap-1 ${ordem === campo ? "text-accent-strong" : "hover:text-ink"}`} aria-current={ordem === campo ? "true" : undefined}>
+        {children}
+        {ordem === campo && <IconeAbaixo />}
       </Link>
     </th>
   );
@@ -68,7 +71,7 @@ export default async function ComparativoPage({ searchParams }: { searchParams: 
     <div className="grid max-w-6xl gap-8">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-3xl font-extrabold tracking-tight">Comparativo</h1>
+          <h1 className="font-display text-[2rem] leading-tight font-bold tracking-tight">Comparativo</h1>
           <p className="mt-1 text-muted">
             {temConcorrentes
               ? "Ranking e participação de mercado entre os perfis monitorados."
@@ -78,7 +81,7 @@ export default async function ComparativoPage({ searchParams }: { searchParams: 
         <div className="flex flex-wrap gap-2">
           {[ESCOPOS.map((e) => ({ v: e.v, r: e.r, ativo: e.v === escopo.v, href: link({ escopo: e.v }) })),
             PERIODOS.map((p) => ({ v: p.v, r: p.r, ativo: p.v === periodo, href: link({ periodo: p.v }) }))].map((grupo, gi) => (
-            <nav key={gi} aria-label={gi ? "Período" : "Perfis"} className="flex gap-1 rounded-lg border border-line bg-surface p-1 text-sm">
+            <nav key={gi} aria-label={gi ? "Período" : "Perfis"} className="flex gap-1 rounded-balao-sm border border-line bg-surface p-1 text-sm shadow-card">
               {grupo.map((o) => (
                 <Link key={o.v} href={o.href} aria-current={o.ativo ? "page" : undefined}
                   className={`rounded-md px-3 py-1.5 ${o.ativo ? "bg-accent font-semibold text-accent-ink" : "text-muted hover:text-ink"}`}>
@@ -90,26 +93,27 @@ export default async function ComparativoPage({ searchParams }: { searchParams: 
         </div>
       </header>
 
-      <section aria-label="Totais" className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      <section aria-label="Totais" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {[
           ["Perfis", String(perfis.length)],
           ["Seguidores somados", formatarNumero(totalSeguidores)],
           [`Ganho em ${periodo} dias`, formatarVariacao(resumos.some((r) => r.ganho !== null) ? totalGanho : null)],
           ["Maior crescimento", ranking[0] && ranking[0].crescimentoPct !== null ? `@${porId.get(ranking[0].perfil_id)!.handle}` : "—"],
         ].map(([r, v]) => (
-          <div key={r} className="rounded-xl border border-line bg-surface px-4 py-3">
+          <div key={r} className="rounded-balao border border-line bg-surface px-4 py-3 shadow-card">
             <div className="text-xs font-semibold uppercase tracking-wide text-muted">{r}</div>
-            <div className="mt-1 truncate font-display text-2xl font-extrabold tabular-nums">{v}</div>
+            {/* Um @perfil é mais longo que um número: entra um passo menor no celular para caber inteiro. */}
+            <div className={`mt-1 font-display font-bold break-words tabular-nums ${v.startsWith("@") ? "text-base sm:text-lg xl:text-xl" : "text-2xl"}`}>{v}</div>
           </div>
         ))}
       </section>
 
       <section className="grid gap-3">
-        <h2 className="font-display text-xl font-extrabold">Ranking</h2>
+        <h2 className="font-display text-xl font-bold">Ranking</h2>
         {perfis.length === 0 ? (
           <p className="text-muted">Nenhum perfil neste grupo.</p>
         ) : (
-          <div className="overflow-x-auto rounded-xl border border-line bg-surface">
+          <div className="overflow-x-auto rounded-balao border border-line bg-surface shadow-card">
             <table className="w-full min-w-[860px] text-left text-sm">
               <thead className="text-xs uppercase tracking-wide text-muted">
                 <tr className="border-b border-line">
@@ -131,12 +135,20 @@ export default async function ComparativoPage({ searchParams }: { searchParams: 
                   const cor = r.ganho === null || r.ganho === 0 ? "text-muted" : r.ganho > 0 ? "text-ok" : "text-danger";
                   return (
                     <tr key={r.perfil_id} className="border-b border-line last:border-0">
-                      <td className="px-4 py-3 font-display text-lg font-extrabold text-muted">{i + 1}</td>
+                      <td className="px-4 py-3 font-display text-lg font-bold text-muted">
+                        {i === 0 && ranking.length > 1 ? (
+                          <span className="grid size-7 place-items-center rounded-balao-sm bg-accent text-accent-ink" title="1º lugar">
+                            <Estrela className="size-4" titulo="1º lugar" />
+                          </span>
+                        ) : (
+                          i + 1
+                        )}
+                      </td>
                       <td className="px-4 py-3">
                         <Link href={`/perfis/${p.handle}`} className="flex items-center gap-3">
                           <Avatar caminho={p.foto_path} handle={p.handle} />
                           <span>
-                            <span className="block font-medium text-accent">@{p.handle}</span>
+                            <span className="block font-medium text-accent-strong">@{p.handle}</span>
                             <span className="block text-xs text-muted">{GRUPOS[p.grupo]}</span>
                           </span>
                         </Link>
@@ -161,13 +173,13 @@ export default async function ComparativoPage({ searchParams }: { searchParams: 
       </section>
 
       <section className="grid gap-3">
-        <h2 className="font-display text-xl font-extrabold">Crescimento acumulado</h2>
+        <h2 className="font-display text-xl font-bold">Crescimento acumulado</h2>
         <p className="text-sm text-muted">Variação em % desde o início do período. Coloca perfis grandes e pequenos na mesma escala.</p>
         <GraficoLinhas series={series} titulo="Crescimento acumulado de seguidores por perfil" />
       </section>
 
       <section className="grid gap-3">
-        <h2 className="font-display text-xl font-extrabold">Participação</h2>
+        <h2 className="font-display text-xl font-bold">Participação</h2>
         <div className="grid gap-4 md:grid-cols-2">
           {([
             ["audiencia", "Audiência", "Fatia dos seguidores somados"],
@@ -175,7 +187,7 @@ export default async function ComparativoPage({ searchParams }: { searchParams: 
             ["engajamento", "Atenção", "Fatia das interações médias por post"],
             ["voz", "Presença", "Fatia dos posts publicados no período"],
           ] as const).map(([chave, titulo, dica]) => (
-            <div key={chave} className="rounded-xl border border-line bg-surface p-4">
+            <div key={chave} className="rounded-balao border border-line bg-surface p-4 shadow-card">
               <div className="font-semibold">{titulo}</div>
               <div className="mb-3 text-xs text-muted">{dica}</div>
               <ul className="grid gap-2">

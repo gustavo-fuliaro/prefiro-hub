@@ -50,7 +50,7 @@ export function BriefingCard({
   }
 
   return (
-    <article id={`ideia-${ideia.id}`} className="scroll-mt-6 rounded-xl border border-line bg-surface p-4 target:border-accent">
+    <article id={`ideia-${ideia.id}`} className="scroll-mt-6 rounded-balao border border-line bg-surface p-4 target:border-accent shadow-card">
       <header className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="font-semibold leading-snug">{ideia.titulo}</h3>
@@ -60,7 +60,7 @@ export function BriefingCard({
             {quando ? ` · postar em ${quando}` : ""}
           </p>
         </div>
-        <Link href={linkPlanejador} className="shrink-0 text-xs text-accent hover:underline">Editar ideia</Link>
+        <Link href={linkPlanejador} className="shrink-0 text-xs text-accent-strong hover:underline">Editar ideia</Link>
       </header>
 
       {ideia.gancho && <p className="mt-2 text-sm"><span className="font-semibold">Gancho:</span> {ideia.gancho}</p>}
@@ -70,7 +70,7 @@ export function BriefingCard({
           <div className={`h-full ${prog.pct === 100 ? "bg-ok" : "bg-accent"}`} style={{ width: `${prog.pct}%` }} />
         </div>
         <span className="text-xs tabular-nums text-muted">{prog.feitos}/{prog.total}</span>
-        <button type="button" onClick={() => setAberto((a) => !a)} aria-expanded={aberto} className="text-xs font-semibold text-accent hover:underline">
+        <button type="button" onClick={() => setAberto((a) => !a)} aria-expanded={aberto} className="text-xs font-semibold text-accent-strong hover:underline">
           {aberto ? "Fechar checklist" : "Abrir checklist"}
         </button>
       </div>
@@ -78,7 +78,7 @@ export function BriefingCard({
       {aberto && (
         <div className="mt-4 grid gap-4">
           {ideia.tese && (
-            <div className="rounded-lg bg-bg p-3 text-sm">
+            <div className="rounded-balao-sm bg-bg p-3 text-sm">
               <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted">Roteiro</div>
               <p className="whitespace-pre-line">{ideia.tese}</p>
               {ideia.cta && <p className="mt-2"><span className="font-semibold">CTA:</span> {ideia.cta}</p>}

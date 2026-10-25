@@ -74,14 +74,14 @@ export function Gerador({
   const gerando = !!jobId;
 
   return (
-    <form action={gerar} className="grid gap-4 rounded-xl border border-line bg-surface p-5">
+    <form action={gerar} className="grid gap-4 rounded-balao border border-line bg-surface p-5 shadow-card">
       <fieldset disabled={gerando} className="grid gap-4">
         <legend className="sr-only">O que gerar</legend>
         <div className="grid gap-2 sm:grid-cols-3">
           {(Object.entries(TIPOS_GERACAO) as [TipoGeracao, { rotulo: string; descricao: string }][]).map(([v, t]) => (
             <label
               key={v}
-              className={`cursor-pointer rounded-lg border p-3 ${tipo === v ? "border-accent bg-accent-soft" : "border-line hover:border-accent"}`}
+              className={`cursor-pointer rounded-balao-sm border p-3 ${tipo === v ? "border-accent bg-accent-soft" : "border-line hover:border-accent"}`}
             >
               <input type="radio" name="tipo" value={v} checked={tipo === v} onChange={() => setTipo(v)} className="sr-only" />
               <span className="block font-semibold">{t.rotulo}</span>

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Estrela } from "@/components/marca";
 import { METRICAS_META, isMetricaMeta } from "@/lib/comparativo";
 import { hojeSP } from "@/lib/dados-comparativo";
 import { membroAtual, podeEditarCadastro } from "@/lib/membro";
@@ -26,9 +27,9 @@ const ROTULO_ALERTA: Record<string, string> = {
 
 function Kpi({ rotulo, valor, delta }: { rotulo: string; valor: string; delta?: number | null }) {
   return (
-    <div className="rounded-xl border border-line bg-surface p-4">
+    <div className="rounded-balao border border-line bg-surface p-4 shadow-card">
       <div className="text-xs font-semibold uppercase tracking-wide text-muted">{rotulo}</div>
-      <div className="mt-1 font-display text-2xl font-extrabold tabular-nums">{valor}</div>
+      <div className="mt-1 font-display text-2xl font-bold tabular-nums">{valor}</div>
       {delta !== undefined && (
         <div className={`mt-0.5 text-xs tabular-nums ${delta === null ? "text-muted" : delta > 0 ? "text-ok" : delta < 0 ? "text-danger" : "text-muted"}`}>
           {delta === null ? "sem semana anterior" : `${formatarVariacao(delta)} vs. semana anterior`}
@@ -60,7 +61,7 @@ export default async function ProgressoPage({ searchParams }: { searchParams: Pr
   const cabecalho = (
     <header className="flex flex-wrap items-end justify-between gap-4 print:hidden">
       <div>
-        <h1 className="font-display text-3xl font-extrabold tracking-tight">Progresso</h1>
+        <h1 className="font-display text-[2rem] leading-tight font-bold tracking-tight">Progresso</h1>
         <p className="mt-1 text-muted">Relatório semanal dos perfis, gerado toda segunda às 8h com os números da semana anterior.</p>
       </div>
       <div className="flex flex-wrap items-center gap-3">
@@ -74,7 +75,7 @@ export default async function ProgressoPage({ searchParams }: { searchParams: Pr
     return (
       <div className="grid max-w-6xl gap-6">
         {cabecalho}
-        <div className="rounded-xl border border-dashed border-line px-6 py-10 text-center">
+        <div className="rounded-balao border border-dashed border-line px-6 py-10 text-center">
           <p className="font-medium">Nenhum relatório ainda.</p>
           <p className="mt-1 text-sm text-muted">O primeiro sai na segunda às 8h. {pode ? "Você também pode gerar uma prévia da semana atual agora." : ""}</p>
         </div>
@@ -100,7 +101,7 @@ export default async function ProgressoPage({ searchParams }: { searchParams: Pr
             key={r.id}
             href={`/progresso?semana=${r.semana_inicio}`}
             aria-current={r.id === rel.id ? "page" : undefined}
-            className={`rounded-full border px-3 py-1 text-sm tabular-nums ${r.id === rel.id ? "border-accent bg-accent-soft text-accent" : "border-line hover:border-accent"}`}
+            className={`rounded-full border px-3 py-1 text-sm tabular-nums ${r.id === rel.id ? "border-accent bg-accent-soft text-accent-strong" : "border-line hover:border-accent"}`}
           >
             {rotuloSemana(r.semana_inicio, r.semana_fim)}
             {r.parcial && " (prévia)"}
@@ -109,7 +110,7 @@ export default async function ProgressoPage({ searchParams }: { searchParams: Pr
       </nav>
 
       <section className="grid gap-1">
-        <h2 className="font-display text-2xl font-extrabold">
+        <h2 className="font-display text-2xl font-bold">
           Semana de {rotuloSemana(rel.semana_inicio, rel.semana_fim)}
           {rel.parcial && <span className="ml-2 align-middle rounded-full bg-warn-soft px-2 py-0.5 text-xs font-semibold text-warn">Prévia: semana em andamento</span>}
         </h2>
@@ -120,9 +121,13 @@ export default async function ProgressoPage({ searchParams }: { searchParams: Pr
       </section>
 
       {frases.length > 0 && (
-        <ul className="grid gap-1 rounded-xl border-l-4 border-accent bg-surface p-4 text-sm">
-          {frases.map((f) => <li key={f}>{f}</li>)}
-        </ul>
+        // Os destaques da semana como uma fala da Prefiro: balão laranja-claro com a estrela.
+        <div className="flex items-start gap-3 rounded-balao bg-accent-wash p-4 text-sm">
+          <Estrela className="mt-0.5 size-5 shrink-0 text-accent" />
+          <ul className="grid gap-1">
+            {frases.map((f) => <li key={f}>{f}</li>)}
+          </ul>
+        </div>
       )}
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -133,8 +138,8 @@ export default async function ProgressoPage({ searchParams }: { searchParams: Pr
       </div>
 
       <section className="grid gap-3">
-        <h3 className="font-display text-lg font-extrabold">Perfis</h3>
-        <div className="overflow-x-auto rounded-xl border border-line bg-surface">
+        <h3 className="font-display text-lg font-bold">Perfis</h3>
+        <div className="overflow-x-auto rounded-balao border border-line bg-surface shadow-card">
           <table className="w-full min-w-[720px] text-sm">
             <thead className="border-b border-line text-xs uppercase tracking-wide text-muted">
               <tr>
@@ -152,7 +157,7 @@ export default async function ProgressoPage({ searchParams }: { searchParams: Pr
               {linhas.map((l) => (
                 <tr key={l.id} className="border-b border-line last:border-0">
                   <td className="px-4 py-3">
-                    <Link href={`/perfis/${l.handle}`} className="font-medium text-accent hover:underline">@{l.handle}</Link>
+                    <Link href={`/perfis/${l.handle}`} className="font-medium text-accent-strong hover:underline">@{l.handle}</Link>
                     {l.coberturaIncompleta && <span className="ml-1 text-xs text-muted" title={`${l.dias_coletados} de 7 dias com leitura`}>*</span>}
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums">{formatarNumero(l.seguidores_fim, { compacto: false })}</td>
@@ -174,20 +179,26 @@ export default async function ProgressoPage({ searchParams }: { searchParams: Pr
 
       {d.top_posts.length > 0 && (
         <section className="grid gap-3">
-          <h3 className="font-display text-lg font-extrabold">Posts com mais interações</h3>
+          <h3 className="font-display text-lg font-bold">Posts com mais interações</h3>
           <ol className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {d.top_posts.map((p, i) => {
               const thumb = urlMidia(p.thumb_path);
               return (
-                <li key={p.id} className="flex gap-3 rounded-xl border border-line bg-surface p-3">
-                  <div className="relative size-20 shrink-0 overflow-hidden rounded-lg bg-bg">
+                <li key={p.id} className="flex gap-3 rounded-balao border border-line bg-surface p-3 shadow-card">
+                  <div className="relative size-20 shrink-0 overflow-hidden rounded-balao-sm bg-bg">
                     {thumb ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={thumb} alt="" className="size-full object-cover" loading="lazy" />
                     ) : (
                       <span className="grid size-full place-items-center text-xs text-muted">{p.produto === "REELS" ? "Reel" : "Post"}</span>
                     )}
-                    <span className="absolute left-1 top-1 rounded bg-surface/90 px-1 text-[11px] font-bold">{i + 1}º</span>
+                    {i === 0 ? (
+                      <span className="absolute left-1 top-1 grid size-6 place-items-center rounded-balao-sm bg-accent text-accent-ink" title="Melhor post da semana">
+                        <Estrela className="size-3.5" titulo="1º lugar" />
+                      </span>
+                    ) : (
+                      <span className="absolute left-1 top-1 rounded-md bg-surface/90 px-1.5 text-[11px] font-bold tabular-nums">{i + 1}º</span>
+                    )}
                   </div>
                   <div className="min-w-0 text-sm">
                     <div className="font-semibold">@{p.handle}</div>
@@ -196,7 +207,7 @@ export default async function ProgressoPage({ searchParams }: { searchParams: Pr
                     </div>
                     <p className="mt-1 line-clamp-2">{p.legenda ?? "Sem legenda"}</p>
                     {p.permalink && (
-                      <a href={p.permalink} target="_blank" rel="noopener noreferrer" className="text-xs text-accent hover:underline print:hidden">Abrir no Instagram</a>
+                      <a href={p.permalink} target="_blank" rel="noopener noreferrer" className="text-xs text-accent-strong hover:underline print:hidden">Abrir no Instagram</a>
                     )}
                   </div>
                 </li>
@@ -208,16 +219,16 @@ export default async function ProgressoPage({ searchParams }: { searchParams: Pr
 
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="grid content-start gap-3">
-          <h3 className="font-display text-lg font-extrabold">Metas</h3>
+          <h3 className="font-display text-lg font-bold">Metas</h3>
           {d.metas.length === 0 ? (
-            <p className="text-sm text-muted">Nenhuma meta ativa. <Link href="/metas" className="text-accent hover:underline print:hidden">Criar meta</Link></p>
+            <p className="text-sm text-muted">Nenhuma meta ativa. <Link href="/metas" className="text-accent-strong hover:underline print:hidden">Criar meta</Link></p>
           ) : (
             <ul className="grid gap-2">
               {d.metas.map((m) => {
                 const pct = progressoMeta(m);
                 const rotulo = isMetricaMeta(m.metrica) ? METRICAS_META[m.metrica].rotulo : m.metrica;
                 return (
-                  <li key={m.id} className="rounded-xl border border-line bg-surface p-3 text-sm">
+                  <li key={m.id} className="rounded-balao border border-line bg-surface p-3 text-sm shadow-card">
                     <div className="flex justify-between gap-2">
                       <span><span className="font-semibold">@{m.handle}</span> · {rotulo}: {formatarNumero(m.alvo, { compacto: false })} até {dataBr(m.prazo)}</span>
                       <span className="tabular-nums text-muted">{pct === null ? "—" : `${Math.round(pct)}%`}</span>
@@ -234,13 +245,13 @@ export default async function ProgressoPage({ searchParams }: { searchParams: Pr
         </section>
 
         <section className="grid content-start gap-3">
-          <h3 className="font-display text-lg font-extrabold">Ideias do planejador publicadas</h3>
+          <h3 className="font-display text-lg font-bold">Ideias do planejador publicadas</h3>
           {d.ideias_publicadas.length === 0 ? (
             <p className="text-sm text-muted">Nenhum post desta semana foi ligado a uma ideia. Ligue o post na ideia, no planejador, para medir o resultado.</p>
           ) : (
             <ul className="grid gap-2 text-sm">
               {d.ideias_publicadas.map((i) => (
-                <li key={i.id} className="flex justify-between gap-2 rounded-xl border border-line bg-surface p-3">
+                <li key={i.id} className="flex justify-between gap-2 rounded-balao border border-line bg-surface p-3 shadow-card">
                   <span><span className="font-semibold">@{i.handle}</span> · {i.titulo}</span>
                   <span className="shrink-0 tabular-nums text-muted">{formatarNumero(i.interacoes)} interações</span>
                 </li>
@@ -248,7 +259,7 @@ export default async function ProgressoPage({ searchParams }: { searchParams: Pr
             </ul>
           )}
 
-          <h3 className="mt-3 font-display text-lg font-extrabold">Alertas da semana</h3>
+          <h3 className="mt-3 font-display text-lg font-bold">Alertas da semana</h3>
           {alertas.length === 0 ? (
             <p className="text-sm text-muted">Nenhum alerta.</p>
           ) : (

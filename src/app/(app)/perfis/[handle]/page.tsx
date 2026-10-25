@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Avatar } from "@/components/avatar";
+import { IconeAnterior } from "@/components/icones";
 import { Sparkline } from "@/components/sparkline";
 import { membroAtual, podeEditarCadastro } from "@/lib/membro";
 import {
@@ -129,16 +130,18 @@ export default async function PerfilPage({ params, searchParams }: { params: Pro
 
   return (
     <div className="grid max-w-6xl gap-8">
-      <Link href="/perfis" className="text-sm text-muted hover:text-accent">← Todos os perfis</Link>
+      <Link href="/perfis" className="inline-flex items-center gap-1 text-sm text-muted hover:text-accent-strong"><IconeAnterior /> Todos os perfis</Link>
 
       <header className="flex flex-wrap items-start gap-5">
         <Avatar caminho={perfil.foto_path} handle={perfil.handle} tamanho={76} />
         <div className="min-w-0 flex-1">
-          <div className="text-xs font-semibold uppercase tracking-wide text-accent">{GRUPOS[perfil.grupo]}</div>
-          <h1 className="font-display text-3xl font-extrabold tracking-tight">{perfil.nome ?? `@${perfil.handle}`}</h1>
-          <a href={`https://www.instagram.com/${perfil.handle}/`} target="_blank" rel="noopener noreferrer" className="text-sm text-accent hover:underline">
-            @{perfil.handle}
-          </a>
+          <h1 className="font-display text-[2rem] leading-tight font-bold tracking-tight">{perfil.nome ?? `@${perfil.handle}`}</h1>
+          <div className="mt-1 flex flex-wrap items-center gap-2 text-sm">
+            <a href={`https://www.instagram.com/${perfil.handle}/`} target="_blank" rel="noopener noreferrer" className="text-accent-strong hover:underline">
+              @{perfil.handle}
+            </a>
+            <span className="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent-strong">{GRUPOS[perfil.grupo]}</span>
+          </div>
           {perfil.bio && <p className="mt-2 max-w-2xl whitespace-pre-line text-sm text-muted">{perfil.bio}</p>}
         </div>
         {podeEditarCadastro(membro?.papel) && <ColetarBotao perfilId={perfil.id} rotulo="Atualizar este perfil" />}
@@ -148,16 +151,16 @@ export default async function PerfilPage({ params, searchParams }: { params: Pro
         <p role="alert" className="rounded-md bg-danger-soft px-4 py-3 text-sm text-danger">Última coleta falhou: {perfil.ultimo_erro}</p>
       )}
 
-      <section aria-label="Números atuais" className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      <section aria-label="Números atuais" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {[
           ["Seguidores", formatarNumero(atual?.seguidores ?? null)],
           ["Posts", formatarNumero(atual?.total_posts ?? null)],
           ["Seguindo", formatarNumero(atual?.seguindo ?? null)],
           ["Engajamento médio", formatarPct(eng, 2)],
         ].map(([rotulo, valor]) => (
-          <div key={rotulo} className="rounded-xl border border-line bg-surface px-4 py-3">
+          <div key={rotulo} className="rounded-balao border border-line bg-surface px-4 py-3 shadow-card">
             <div className="text-xs font-semibold uppercase tracking-wide text-muted">{rotulo}</div>
-            <div className="mt-1 font-display text-2xl font-extrabold tabular-nums">{valor}</div>
+            <div className="mt-1 font-display text-2xl font-bold tabular-nums">{valor}</div>
           </div>
         ))}
       </section>
@@ -165,7 +168,7 @@ export default async function PerfilPage({ params, searchParams }: { params: Pro
       <section className="grid gap-4">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h2 className="font-display text-xl font-extrabold">Evolução no tempo</h2>
+            <h2 className="font-display text-xl font-bold">Evolução no tempo</h2>
             <p className="text-sm text-muted">
               {janela.length > 1
                 ? `De ${dataCurta.format(new Date(`${janela[0].dia}T12:00:00Z`))} a ${dataCurta.format(new Date(`${janela.at(-1)!.dia}T12:00:00Z`))}. Verde: subiu mais de 2%. Vermelho: caiu mais de 2%.`
@@ -174,7 +177,7 @@ export default async function PerfilPage({ params, searchParams }: { params: Pro
                   : "Ainda sem registros neste período."}
             </p>
           </div>
-          <nav aria-label="Período" className="flex gap-1 rounded-lg border border-line bg-surface p-1 text-sm">
+          <nav aria-label="Período" className="flex gap-1 rounded-balao-sm border border-line bg-surface p-1 text-sm shadow-card">
             {PERIODOS.map((p) => (
               <Link
                 key={p.valor}
@@ -187,14 +190,14 @@ export default async function PerfilPage({ params, searchParams }: { params: Pro
             ))}
           </nav>
         </div>
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 lg:grid-cols-3">
           {cards.map((c) => {
             const cor = farol(c.pct);
             return (
-              <div key={c.titulo} className={`grid gap-2 rounded-xl border bg-surface p-4 ${c.destaque ? "border-accent" : "border-line"}`}>
+              <div key={c.titulo} className={`grid gap-2 rounded-balao border bg-surface p-4 ${c.destaque ? "border-accent" : "border-line"}`}>
                 <div className="text-xs font-semibold uppercase tracking-wide text-muted">{c.titulo}</div>
                 <div className="flex items-baseline gap-2">
-                  <span className={`font-display text-3xl font-extrabold tabular-nums ${COR_FAROL[cor]}`}>{c.valor}</span>
+                  <span className={`font-display text-3xl font-bold tabular-nums ${COR_FAROL[cor]}`}>{c.valor}</span>
                   {c.pct !== null && <span className={`text-sm font-semibold ${COR_FAROL[cor]}`}>{c.pct > 0 ? "+" : ""}{formatarPct(c.pct)}</span>}
                 </div>
                 <div className="text-sm text-muted tabular-nums">{c.sub}</div>
@@ -207,15 +210,15 @@ export default async function PerfilPage({ params, searchParams }: { params: Pro
 
       {destaques.length > 0 && (
         <section className="grid gap-3">
-          <h2 className="font-display text-xl font-extrabold">Melhores posts do período</h2>
-          <ol className="grid gap-3 md:grid-cols-3">
+          <h2 className="font-display text-xl font-bold">Melhores posts do período</h2>
+          <ol className="grid gap-3 lg:grid-cols-3">
             {destaques.map(({ p, inter }, i) => (
-              <li key={p.id} className="flex gap-3 rounded-xl border border-line bg-surface p-3">
-                <span className="font-display text-2xl font-extrabold text-accent">{i + 1}</span>
+              <li key={p.id} className="flex gap-3 rounded-balao border border-line bg-surface p-3 shadow-card">
+                <span className="font-display text-2xl font-bold text-accent-strong">{i + 1}</span>
                 <div className="min-w-0 text-sm">
                   <div className="font-semibold tabular-nums">{formatarNumero(inter)} interações</div>
                   <p className="line-clamp-2 text-muted">{p.legenda ?? "Sem legenda"}</p>
-                  {p.permalink && <a href={p.permalink} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">Abrir no Instagram</a>}
+                  {p.permalink && <a href={p.permalink} target="_blank" rel="noopener noreferrer" className="text-accent-strong hover:underline">Abrir no Instagram</a>}
                 </div>
               </li>
             ))}
@@ -224,7 +227,7 @@ export default async function PerfilPage({ params, searchParams }: { params: Pro
       )}
 
       <section className="grid gap-3">
-        <h2 className="font-display text-xl font-extrabold">Últimos posts</h2>
+        <h2 className="font-display text-xl font-bold">Últimos posts</h2>
         {listaPosts.length === 0 ? (
           <p className="text-muted">Os posts aparecem depois da primeira coleta.</p>
         ) : (
@@ -233,7 +236,7 @@ export default async function PerfilPage({ params, searchParams }: { params: Pro
               const m = ultima.get(p.id);
               const src = urlMidia(p.thumb_path);
               return (
-                <li key={p.id} className="overflow-hidden rounded-xl border border-line bg-surface">
+                <li key={p.id} className="overflow-hidden rounded-balao border border-line bg-surface shadow-card">
                   <a href={p.permalink ?? "#"} target="_blank" rel="noopener noreferrer" className="block">
                     <div className="relative aspect-square bg-bg">
                       {src && (

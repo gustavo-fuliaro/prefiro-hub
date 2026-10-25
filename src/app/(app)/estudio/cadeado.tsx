@@ -17,11 +17,11 @@ export function EstudioBloqueado({ admin }: { admin: boolean }) {
   const [pendente, iniciar] = useTransition();
 
   return (
-    <section className="grid gap-3 rounded-xl border border-line bg-surface p-5">
+    <section className="grid gap-3 rounded-balao border border-line bg-surface p-5 shadow-card">
       <div className="flex items-start gap-3">
         <span className="mt-0.5 text-muted"><Icone /></span>
         <div>
-          <h2 className="font-display text-lg font-extrabold">Estúdio bloqueado</h2>
+          <h2 className="font-display text-lg font-bold">Estúdio bloqueado</h2>
           <p className="mt-1 text-sm text-muted">
             A geração com IA está desligada até a conta da Anthropic ter créditos. Os materiais já gerados continuam disponíveis abaixo.
           </p>

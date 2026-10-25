@@ -26,7 +26,7 @@ export function SeletorPerfil({
     ...perfis.map((p) => ({ valor: p.handle, rotulo: `@${p.handle}` })),
   ];
   return (
-    <nav aria-label="Perfil" className="flex flex-wrap gap-1 rounded-lg border border-line bg-surface p-1 text-sm">
+    <nav aria-label="Perfil" className="flex flex-wrap gap-1 rounded-balao-sm border border-line bg-surface p-1 text-sm shadow-card">
       {opcoes.map((o) => {
         const ativo = o.valor === atual;
         return (

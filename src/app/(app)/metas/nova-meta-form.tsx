@@ -14,7 +14,7 @@ export function NovaMetaForm({ perfis, amanha }: { perfis: { id: number; handle:
   }, [estado]);
 
   return (
-    <form ref={ref} action={enviar} className="grid gap-3 rounded-xl border border-line bg-surface p-5 md:grid-cols-[1.2fr_1.2fr_1fr_1fr_auto] md:items-end">
+    <form ref={ref} action={enviar} className="grid gap-3 rounded-balao border border-line bg-surface p-5 lg:grid-cols-[1.2fr_1.2fr_1fr_1fr_auto] lg:items-end shadow-card">
       <label className="grid gap-1 text-sm font-medium">
         Perfil
         <select id="meta-perfil" name="perfil_id" required className={campo}>
@@ -42,7 +42,7 @@ export function NovaMetaForm({ perfis, amanha }: { perfis: { id: number; handle:
       <button type="submit" disabled={pendente} className="rounded-md bg-accent px-4 py-2 font-semibold text-accent-ink disabled:opacity-60">
         {pendente ? "Salvando…" : "Criar meta"}
       </button>
-      <p aria-live="polite" className="text-sm md:col-span-5">
+      <p aria-live="polite" className="text-sm lg:col-span-5">
         {estado.erro && <span className="text-danger">{estado.erro}</span>}
         {estado.ok && <span className="text-ok">{estado.ok}</span>}
       </p>

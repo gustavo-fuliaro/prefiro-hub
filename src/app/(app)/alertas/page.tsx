@@ -23,10 +23,11 @@ const TIPO: Record<string, string> = {
   relatorio_semanal: "Relatório semanal",
 };
 const COR: Record<Alerta["severidade"], string> = {
-  critico: "border-danger bg-danger-soft text-danger",
-  atencao: "border-warn bg-warn-soft text-warn",
-  info: "border-accent bg-accent-soft text-accent",
+  critico: "bg-danger-soft text-danger",
+  atencao: "bg-warn-soft text-warn",
+  info: "bg-accent-soft text-accent-strong",
 };
+const PONTO: Record<Alerta["severidade"], string> = { critico: "bg-danger", atencao: "bg-warn", info: "bg-accent" };
 const quando = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short", timeZone: "America/Sao_Paulo" });
 
 export default async function AlertasPage({ searchParams }: { searchParams: Promise<{ ver?: string }> }) {
@@ -41,11 +42,11 @@ export default async function AlertasPage({ searchParams }: { searchParams: Prom
     <div className="grid max-w-4xl gap-6">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-3xl font-extrabold tracking-tight">Alertas</h1>
+          <h1 className="font-display text-[2rem] leading-tight font-bold tracking-tight">Alertas</h1>
           <p className="mt-1 text-muted">Gerados todo dia às 06:20, depois da coleta.</p>
         </div>
         <div className="flex items-center gap-3 text-sm">
-          <Link href={todos ? "/alertas" : "/alertas?ver=todos"} className="text-accent hover:underline">
+          <Link href={todos ? "/alertas" : "/alertas?ver=todos"} className="text-accent-strong hover:underline">
             {todos ? "Ver só não lidos" : "Ver todos"}
           </Link>
           {!todos && alertas.length > 0 && (
@@ -57,14 +58,15 @@ export default async function AlertasPage({ searchParams }: { searchParams: Prom
       </header>
 
       {alertas.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-line px-6 py-10 text-center text-muted">
+        <p className="rounded-balao border border-dashed border-line px-6 py-10 text-center text-muted">
           {todos ? "Nenhum alerta ainda." : "Nenhum alerta não lido."}
         </p>
       ) : (
         <ul className="grid gap-2">
           {alertas.map((a) => (
-            <li key={a.id} className={`flex flex-wrap items-start gap-3 rounded-xl border-l-4 bg-surface p-4 ${COR[a.severidade].split(" ")[0]} ${a.lido ? "opacity-60" : ""}`}>
-              <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${COR[a.severidade].split(" ").slice(1).join(" ")}`}>
+            <li key={a.id} className={`flex flex-wrap items-start gap-3 rounded-balao border border-line bg-surface p-4 shadow-card ${a.lido ? "opacity-60" : ""}`}>
+              <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ${COR[a.severidade]}`}>
+                <span aria-hidden className={`size-1.5 rounded-full ${PONTO[a.severidade]}`} />
                 {TIPO[a.tipo] ?? a.tipo}
               </span>
               <div className="min-w-0 flex-1">
@@ -74,8 +76,8 @@ export default async function AlertasPage({ searchParams }: { searchParams: Prom
               <div className="flex items-center gap-3 text-sm">
                 {a.link && (
                   a.link.startsWith("/")
-                    ? <Link href={a.link} className="text-accent hover:underline">Abrir</Link>
-                    : <a href={a.link} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">Abrir post</a>
+                    ? <Link href={a.link} className="text-accent-strong hover:underline">Abrir</Link>
+                    : <a href={a.link} target="_blank" rel="noopener noreferrer" className="text-accent-strong hover:underline">Abrir post</a>
                 )}
                 <form action={marcarLido.bind(null, a.id, !a.lido)}>
                   <button type="submit" className="text-muted hover:text-ink">{a.lido ? "Marcar não lido" : "Marcar lido"}</button>

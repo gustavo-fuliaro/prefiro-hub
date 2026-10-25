@@ -49,7 +49,7 @@ export default async function EstudioPage({
     <div className="grid max-w-6xl gap-6">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-3xl font-extrabold tracking-tight">Estúdio de IA</h1>
+          <h1 className="font-display text-[2rem] leading-tight font-bold tracking-tight">Estúdio de IA</h1>
           <p className="mt-1 text-muted">Ideias, roteiros e leitura dos posts, escritos com o posicionamento e os números de cada perfil.</p>
         </div>
         <div className="flex flex-wrap items-center gap-4">
@@ -59,7 +59,7 @@ export default async function EstudioPage({
       </header>
 
       {!comp.pronto && (
-        <p className="rounded-xl border border-warn bg-warn-soft px-4 py-3 text-sm text-warn">
+        <p className="rounded-balao border border-warn bg-warn-soft px-4 py-3 text-sm text-warn">
           O posicionamento de @{perfil.handle} está incompleto ({comp.respondidas}/{comp.total} respostas, {comp.pilares} pilares). A IA funciona, mas escreve de forma mais genérica.{" "}
           <Link href={`/estrategia?perfil=${perfil.handle}`} className="font-semibold underline">Completar na Estratégia</Link>
         </p>
@@ -81,7 +81,7 @@ export default async function EstudioPage({
 
       <div className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
         <aside aria-label="Histórico" className="grid content-start gap-2">
-          <h2 className="font-display text-lg font-extrabold">Histórico</h2>
+          <h2 className="font-display text-lg font-bold">Histórico</h2>
           {lista.length === 0 ? (
             <p className="text-sm text-muted">Nada gerado ainda para este perfil.</p>
           ) : (
@@ -91,7 +91,7 @@ export default async function EstudioPage({
                   <Link
                     href={`/estudio?perfil=${perfil.handle}&material=${m.id}`}
                     aria-current={m.id === selecionado?.id ? "page" : undefined}
-                    className={`block rounded-md px-3 py-2 text-sm ${m.id === selecionado?.id ? "bg-accent-soft text-accent" : "hover:bg-surface"}`}
+                    className={`block rounded-md px-3 py-2 text-sm ${m.id === selecionado?.id ? "bg-accent-soft text-accent-strong" : "hover:bg-surface"}`}
                   >
                     <span className="block font-medium">{TIPOS_GERACAO[m.tipo].rotulo}</span>
                     <span className="block text-xs text-muted">
@@ -104,11 +104,11 @@ export default async function EstudioPage({
           )}
         </aside>
 
-        <section className="min-w-0 rounded-xl border border-line bg-surface p-5">
+        <section className="min-w-0 rounded-balao border border-line bg-surface p-5 shadow-card">
           {selecionado ? (
             <>
               <header className="mb-4 flex flex-wrap items-baseline justify-between gap-2 border-b border-line pb-3">
-                <h2 className="font-display text-xl font-extrabold">{TIPOS_GERACAO[selecionado.tipo].rotulo}</h2>
+                <h2 className="font-display text-xl font-bold">{TIPOS_GERACAO[selecionado.tipo].rotulo}</h2>
                 <span className="text-xs text-muted">
                   {quando.format(new Date(selecionado.criado_em))}
                   {selecionado.modelo ? ` · ${selecionado.modelo}` : ""}

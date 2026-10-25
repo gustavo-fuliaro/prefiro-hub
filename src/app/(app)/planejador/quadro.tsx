@@ -15,6 +15,7 @@ import {
   type Coluna,
   type Ideia,
 } from "@/lib/planejador";
+import { IconeAnterior, IconeMais, IconeProximo } from "@/components/icones";
 import { moverIdeia } from "./actions";
 import { IdeiaDialog } from "./ideia-dialog";
 
@@ -112,14 +113,14 @@ export function Quadro({
                 e.preventDefault();
                 soltar(col.id, itens.length);
               }}
-              className={`flex min-h-48 flex-col gap-3 rounded-xl border bg-surface p-3 ${sobre === col.id ? "border-accent" : "border-line"}`}
+              className={`flex min-h-48 flex-col gap-3 rounded-balao border bg-lane p-3 transition-colors ${sobre === col.id ? "border-accent bg-accent-wash" : "border-transparent"}`}
             >
               <header className="flex items-baseline justify-between px-1">
                 <div>
-                  <h2 className="font-display text-lg font-extrabold">{col.rotulo}</h2>
+                  <h2 className="font-display text-lg font-bold">{col.rotulo}</h2>
                   <p className="text-xs text-muted">{col.dica}</p>
                 </div>
-                <span className="rounded-full bg-bg px-2 py-0.5 text-xs font-semibold tabular-nums text-muted">{itens.length}</span>
+                <span className="rounded-full bg-surface px-2 py-0.5 text-xs font-semibold tabular-nums text-muted">{itens.length}</span>
               </header>
 
               <ol className="flex flex-col gap-2">
@@ -144,14 +145,14 @@ export function Quadro({
                         soltar(col.id, indice);
                       }}
                       onDragOver={(e) => podeEditar && e.preventDefault()}
-                      className={`rounded-lg border border-line bg-bg p-3 ${arrastando === ideia.id ? "opacity-40" : ""} ${podeEditar ? "cursor-grab" : ""}`}
+                      className={`rounded-balao-sm border border-line bg-surface p-3 shadow-card transition-shadow hover:shadow-float ${arrastando === ideia.id ? "opacity-40" : ""} ${podeEditar ? "cursor-grab" : ""}`}
                     >
                       <button type="button" onClick={() => setEditando(ideia)} className="block w-full text-left">
                         <span className="block font-semibold leading-snug">{ideia.titulo}</span>
                         {ideia.gancho && <span className="mt-1 line-clamp-2 block text-sm text-muted">{ideia.gancho}</span>}
                       </button>
                       <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] font-semibold">
-                        {ideia.formato && <span className="rounded bg-accent-soft px-1.5 py-0.5 text-accent">{ideia.formato}</span>}
+                        {ideia.formato && <span className="rounded bg-accent-soft px-1.5 py-0.5 text-accent-strong">{ideia.formato}</span>}
                         {ideia.pilar && <span className="rounded border border-line px-1.5 py-0.5 text-muted">{ideia.pilar}</span>}
                         {ideia.ambiente && <span className="rounded border border-line px-1.5 py-0.5 text-muted">{AMBIENTES[ideia.ambiente]}</span>}
                         {ideia.status_producao && (
@@ -166,20 +167,20 @@ export function Quadro({
                             <button
                               type="button"
                               onClick={() => mover(ideia.id, ant, grupos[ant].length)}
-                              className="rounded border border-line px-2 py-0.5 text-xs text-muted hover:text-ink"
+                              className="grid size-7 place-items-center rounded-md border border-line text-muted hover:border-accent hover:text-ink"
                               aria-label={`Voltar "${ideia.titulo}" para ${COLUNAS.find((c) => c.id === ant)?.rotulo}`}
                             >
-                              ←
+                              <IconeAnterior />
                             </button>
                           )}
                           {seg && (
                             <button
                               type="button"
                               onClick={() => mover(ideia.id, seg, grupos[seg].length)}
-                              className="rounded border border-line px-2 py-0.5 text-xs text-muted hover:text-ink"
+                              className="grid size-7 place-items-center rounded-md border border-line text-muted hover:border-accent hover:text-ink"
                               aria-label={`Avançar "${ideia.titulo}" para ${COLUNAS.find((c) => c.id === seg)?.rotulo}`}
                             >
-                              →
+                              <IconeProximo />
                             </button>
                           )}
                         </div>
@@ -198,9 +199,10 @@ export function Quadro({
                     setColunaNova(col.id);
                     setEditando("nova");
                   }}
-                  className="mt-auto rounded-lg border border-dashed border-line px-3 py-2 text-sm font-medium text-muted hover:border-accent hover:text-accent"
+                  className="mt-auto inline-flex items-center justify-center gap-1.5 rounded-balao-sm border border-dashed border-line-strong px-3 py-2 text-sm font-medium text-muted hover:border-accent hover:text-accent-strong"
                 >
-                  + Nova ideia
+                  <IconeMais />
+                  Nova ideia
                 </button>
               )}
             </section>

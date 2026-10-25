@@ -4,7 +4,7 @@ export function Avatar({ caminho, handle, tamanho = 36 }: { caminho: string | nu
   const src = urlMidia(caminho);
   return (
     <span
-      className="relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full border border-line bg-accent-soft font-semibold text-accent"
+      className="relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full border border-line bg-accent-soft font-semibold text-accent-strong"
       style={{ width: tamanho, height: tamanho, fontSize: tamanho * 0.4 }}
       aria-hidden="true"
     >

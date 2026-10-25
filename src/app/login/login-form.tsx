@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
+const campo = "h-11 rounded-md border border-line bg-surface px-3 font-normal text-ink";
+
 export function LoginForm() {
   const router = useRouter();
   const [erro, setErro] = useState<string | null>(null);
@@ -28,38 +30,24 @@ export function LoginForm() {
   }
 
   return (
-    <form onSubmit={entrar} className="mt-6 grid gap-4">
-      <label className="grid gap-1 text-sm font-medium">
+    <form onSubmit={entrar} className="mt-8 grid gap-5">
+      <label className="grid gap-1.5 text-sm font-medium">
         E-mail
-        <input
-          id="email"
-          name="email"
-          type="email"
-          autoComplete="email"
-          required
-          className="rounded-md border border-line bg-bg px-3 py-2 font-normal"
-        />
+        <input id="email" name="email" type="email" autoComplete="email" required className={campo} />
       </label>
-      <label className="grid gap-1 text-sm font-medium">
+      <label className="grid gap-1.5 text-sm font-medium">
         Senha
-        <input
-          id="senha"
-          name="senha"
-          type="password"
-          autoComplete="current-password"
-          required
-          className="rounded-md border border-line bg-bg px-3 py-2 font-normal"
-        />
+        <input id="senha" name="senha" type="password" autoComplete="current-password" required className={campo} />
       </label>
       {erro && (
-        <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-sm text-danger">
+        <p role="alert" className="rounded-balao-sm bg-danger-soft px-3 py-2 text-sm text-danger">
           {erro}
         </p>
       )}
       <button
         type="submit"
         disabled={enviando}
-        className="rounded-md bg-accent px-4 py-2 font-semibold text-accent-ink disabled:opacity-60"
+        className="mt-1 h-11 rounded-balao-sm bg-accent px-4 font-semibold text-accent-ink hover:brightness-105 disabled:opacity-60"
       >
         {enviando ? "Entrando…" : "Entrar"}
       </button>

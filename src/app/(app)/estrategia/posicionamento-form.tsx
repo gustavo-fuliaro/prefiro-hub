@@ -33,7 +33,7 @@ export function PosicionamentoForm({ perfilId, inicial, podeEditar }: { perfilId
       className="grid gap-8"
     >
       <div
-        className={`rounded-xl border px-4 py-3 text-sm ${comp.pronto ? "border-ok bg-ok-soft text-ok" : "border-warn bg-warn-soft text-warn"}`}
+        className={`rounded-balao border px-4 py-3 text-sm ${comp.pronto ? "border-ok bg-ok-soft text-ok" : "border-warn bg-warn-soft text-warn"}`}
       >
         {comp.pronto
           ? `Posicionamento pronto para a IA: ${comp.respondidas} de ${comp.total} respostas e ${comp.pilares} pilares.`
@@ -41,10 +41,10 @@ export function PosicionamentoForm({ perfilId, inicial, podeEditar }: { perfilId
       </div>
 
       <fieldset disabled={!podeEditar || pendente} className="grid gap-3">
-        <legend className="mb-2 font-display text-xl font-extrabold">Pilares de conteúdo</legend>
+        <legend className="mb-2 font-display text-xl font-bold">Pilares de conteúdo</legend>
         <p className="-mt-1 text-sm text-muted">Os grandes temas do perfil. Toda ideia gerada é encaixada em um deles.</p>
         {pilares.map((p, i) => (
-          <div key={i} className="grid gap-2 rounded-xl border border-line bg-surface p-3 sm:grid-cols-[220px_minmax(0,1fr)_auto] sm:items-start">
+          <div key={i} className="grid gap-2 rounded-balao border border-line bg-surface p-3 sm:grid-cols-[220px_minmax(0,1fr)_auto] sm:items-start shadow-card">
             <input
               id={`pilar-nome-${i}`}
               aria-label={`Nome do pilar ${i + 1}`}
@@ -77,7 +77,7 @@ export function PosicionamentoForm({ perfilId, inicial, podeEditar }: { perfilId
           <button
             type="button"
             onClick={() => setPilares((ps) => [...ps, { nome: "", descricao: "" }])}
-            className="justify-self-start rounded-md border border-dashed border-line px-3 py-1.5 text-sm text-muted hover:border-accent hover:text-accent"
+            className="justify-self-start rounded-md border border-dashed border-line px-3 py-1.5 text-sm text-muted hover:border-accent hover:text-accent-strong"
           >
             + Adicionar pilar
           </button>
@@ -85,7 +85,7 @@ export function PosicionamentoForm({ perfilId, inicial, podeEditar }: { perfilId
       </fieldset>
 
       <fieldset disabled={!podeEditar || pendente} className="grid gap-4">
-        <legend className="mb-2 font-display text-xl font-extrabold">Posicionamento</legend>
+        <legend className="mb-2 font-display text-xl font-bold">Posicionamento</legend>
         <p className="-mt-1 text-sm text-muted">Quanto mais concreto, melhor a IA escreve no tom de quem assina o perfil.</p>
         {PERGUNTAS_POSICIONAMENTO.map((q, i) => {
           const v = respostas[q.id] ?? "";

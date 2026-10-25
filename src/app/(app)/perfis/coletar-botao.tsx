@@ -11,7 +11,7 @@ export function ColetarBotao({ perfilId, rotulo = "Coletar agora" }: { perfilId?
       <button
         type="submit"
         disabled={pendente}
-        className="rounded-md border border-accent px-4 py-2 text-sm font-semibold text-accent hover:bg-accent-soft disabled:opacity-60"
+        className="rounded-md border border-accent px-4 py-2 text-sm font-semibold text-accent-strong hover:bg-accent-soft disabled:opacity-60"
       >
         {pendente ? "Coletando…" : rotulo}
       </button>

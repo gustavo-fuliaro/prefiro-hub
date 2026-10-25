@@ -67,31 +67,31 @@ export function MaterialView({ material, podeEditar, ideiaTitulo, perfilHandle }
     return (
       <div className="grid gap-4">
         <div className="flex flex-wrap items-center gap-2 text-sm text-muted">
-          <span className="rounded bg-accent-soft px-2 py-0.5 font-semibold text-accent">{r.tipo === "reel" ? "Reel" : "Carrossel"}</span>
+          <span className="rounded bg-accent-soft px-2 py-0.5 font-semibold text-accent-strong">{r.tipo === "reel" ? "Reel" : "Carrossel"}</span>
           {r.duracao_estimada && <span>{r.duracao_estimada}</span>}
           {ideiaTitulo && <span>· Ideia: {ideiaTitulo}</span>}
         </div>
         {r.tipo === "reel" ? (
           <ol className="grid gap-3">
-            <li className="rounded-lg border-l-4 border-accent bg-bg p-3">
-              <div className="text-xs font-semibold uppercase tracking-wide text-accent">Gancho</div>
+            <li className="rounded-balao-sm bg-accent-wash p-3">
+              <div className="text-xs font-semibold uppercase tracking-wide text-accent-strong">Gancho</div>
               <p className="mt-1 font-medium">“{r.gancho.fala}”</p>
               <p className="mt-1 text-sm text-muted">Cena: {r.gancho.cena}</p>
               {r.gancho.texto_tela && <p className="text-sm text-muted">Texto na tela: {r.gancho.texto_tela}</p>}
             </li>
             {r.blocos.map((b, i) => (
-              <li key={i} className="rounded-lg border-l-4 border-line bg-bg p-3">
+              <li key={i} className="rounded-balao-sm bg-bg p-3">
                 <div className="text-xs font-semibold uppercase tracking-wide text-muted">Bloco {i + 1}</div>
                 <p className="mt-1">“{b.fala}”</p>
                 <p className="mt-1 text-sm text-muted">Cena: {b.cena}</p>
               </li>
             ))}
-            <li className="rounded-lg border-l-4 border-line bg-bg p-3">
+            <li className="rounded-balao-sm bg-bg p-3">
               <div className="text-xs font-semibold uppercase tracking-wide text-muted">Fechamento</div>
               <p className="mt-1">“{r.fechamento.fala}”</p>
               <p className="mt-1 text-sm text-muted">Cena: {r.fechamento.cena}</p>
             </li>
-            <li className="rounded-lg border-l-4 border-ok bg-bg p-3">
+            <li className="rounded-balao-sm bg-ok-soft p-3">
               <div className="text-xs font-semibold uppercase tracking-wide text-ok">Chamada</div>
               <p className="mt-1">“{r.cta}”</p>
             </li>
@@ -99,7 +99,7 @@ export function MaterialView({ material, podeEditar, ideiaTitulo, perfilHandle }
         ) : (
           <ol className="grid gap-2 sm:grid-cols-2">
             {r.slides.map((s, i) => (
-              <li key={i} className="rounded-lg border border-line bg-bg p-3">
+              <li key={i} className="rounded-balao-sm border border-line bg-bg p-3">
                 <div className="text-xs font-semibold text-muted">{i === 0 ? "Capa" : `Slide ${i + 1}`}</div>
                 <p className="font-semibold">{s.titulo}</p>
                 <p className="mt-1 whitespace-pre-line text-sm">{s.texto}</p>
@@ -107,10 +107,10 @@ export function MaterialView({ material, podeEditar, ideiaTitulo, perfilHandle }
             ))}
           </ol>
         )}
-        <div className="rounded-lg bg-bg p-3">
+        <div className="rounded-balao-sm bg-bg p-3">
           <div className="text-xs font-semibold uppercase tracking-wide text-muted">Legenda</div>
           <p className="mt-1 whitespace-pre-line text-sm">{r.legenda}</p>
-          <p className="mt-2 text-sm text-accent">{r.hashtags.join(" ")}</p>
+          <p className="mt-2 text-sm text-accent-strong">{r.hashtags.join(" ")}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {podeEditar && material.ideia_id && (
@@ -121,7 +121,7 @@ export function MaterialView({ material, podeEditar, ideiaTitulo, perfilHandle }
           <Copiar texto={textoRoteiro(r)} rotulo="Copiar roteiro" />
           <Copiar texto={`${r.legenda}\n\n${r.hashtags.join(" ")}`} rotulo="Copiar legenda" />
           {material.ideia_id && (
-            <Link href={`/briefings?perfil=${perfilHandle}#ideia-${material.ideia_id}`} className="text-sm text-accent hover:underline">Abrir briefing</Link>
+            <Link href={`/briefings?perfil=${perfilHandle}#ideia-${material.ideia_id}`} className="text-sm text-accent-strong hover:underline">Abrir briefing</Link>
           )}
         </div>
         {aviso}
@@ -135,7 +135,7 @@ export function MaterialView({ material, podeEditar, ideiaTitulo, perfilHandle }
       <p className="whitespace-pre-line">{a.resumo}</p>
       <div className="grid gap-3 md:grid-cols-2">
         {a.padroes.map((p, i) => (
-          <div key={i} className="rounded-lg border border-line bg-bg p-3">
+          <div key={i} className="rounded-balao-sm border border-line bg-bg p-3">
             <div className="font-semibold">{p.titulo}</div>
             <p className="mt-1 text-sm text-muted">{p.evidencia}</p>
             <p className="mt-2 text-sm"><span className="font-semibold">Recomendação:</span> {p.recomendacao}</p>
@@ -146,7 +146,7 @@ export function MaterialView({ material, podeEditar, ideiaTitulo, perfilHandle }
         <div>
           <div className="text-xs font-semibold uppercase tracking-wide text-muted">Formatos que funcionam</div>
           <ul className="mt-1 flex flex-wrap gap-2">
-            {a.formatos_que_funcionam.map((f) => <li key={f} className="rounded bg-accent-soft px-2 py-0.5 text-sm text-accent">{f}</li>)}
+            {a.formatos_que_funcionam.map((f) => <li key={f} className="rounded bg-accent-soft px-2 py-0.5 text-sm text-accent-strong">{f}</li>)}
           </ul>
         </div>
       )}
@@ -176,14 +176,14 @@ function ListaIdeias({ ideias, materialId, podeEditar, aprovado, perfilHandle }:
     <div className="grid gap-3">
       <ul className="grid gap-2">
         {ideias.map((i, n) => (
-          <li key={n} className="flex gap-3 rounded-lg border border-line bg-bg p-3">
+          <li key={n} className="flex gap-3 rounded-balao-sm border border-line bg-bg p-3">
             {podeEditar && (
               <input id={`ideia-ia-${n}`} type="checkbox" checked={marcadas.has(n)} onChange={() => alternar(n)} className="mt-1 size-4 accent-[var(--accent)]" aria-label={`Selecionar ${i.titulo}`} />
             )}
             <div className="min-w-0">
               <div className="font-semibold">{i.titulo}</div>
               <div className="mt-0.5 flex flex-wrap gap-1.5 text-[11px] font-semibold">
-                <span className="rounded bg-accent-soft px-1.5 py-0.5 text-accent">{i.formato}</span>
+                <span className="rounded bg-accent-soft px-1.5 py-0.5 text-accent-strong">{i.formato}</span>
                 {i.pilar && <span className="rounded border border-line px-1.5 py-0.5 text-muted">{i.pilar}</span>}
               </div>
               <p className="mt-1 text-sm"><span className="font-semibold">Gancho:</span> {i.gancho}</p>
@@ -205,7 +205,7 @@ function ListaIdeias({ ideias, materialId, podeEditar, aprovado, perfilHandle }:
             {pendente ? "Enviando…" : `Enviar ${marcadas.size} ao planejador`}
           </button>
           {aprovado && <span className="text-sm text-muted">Já enviado antes. Enviar de novo cria cópias.</span>}
-          {res?.ok && <Link href={`/planejador?perfil=${perfilHandle}`} className="text-sm text-accent hover:underline">Abrir planejador</Link>}
+          {res?.ok && <Link href={`/planejador?perfil=${perfilHandle}`} className="text-sm text-accent-strong hover:underline">Abrir planejador</Link>}
         </div>
       )}
       <p aria-live="polite" className="text-sm">

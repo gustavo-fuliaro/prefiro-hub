@@ -21,7 +21,7 @@ export function GraficoLinhas({ series, titulo }: { series: SerieLinha[]; titulo
   const dias = [...new Set(series.flatMap((s) => s.pontos.map((p) => p.dia)))].sort();
   const valores = series.flatMap((s) => s.pontos.map((p) => p.valor));
   if (dias.length < 2 || !valores.length) {
-    return <p className="rounded-xl border border-dashed border-line px-6 py-10 text-center text-sm text-muted">As curvas aparecem quando houver pelo menos dois dias de coleta no período.</p>;
+    return <p className="rounded-balao border border-dashed border-line px-6 py-10 text-center text-sm text-muted">As curvas aparecem quando houver pelo menos dois dias de coleta no período.</p>;
   }
   const { ini, fim, ticks } = escalaBonita(Math.min(0, ...valores), Math.max(0, ...valores));
   const x = (d: string) => M.l + (dias.indexOf(d) / (dias.length - 1)) * (W - M.l - M.r);

@@ -15,7 +15,7 @@ export default async function PlanejadorPage({ searchParams }: { searchParams: P
 
   if (!perfil) {
     return (
-      <div className="max-w-xl rounded-xl border border-dashed border-line px-6 py-10 text-center">
+      <div className="max-w-xl rounded-balao border border-dashed border-line px-6 py-10 text-center">
         <p className="font-medium">Cadastre um perfil para começar a planejar.</p>
         <p className="mt-1 text-sm text-muted">O planejador organiza as ideias de conteúdo de cada perfil.</p>
       </div>
@@ -29,7 +29,7 @@ export default async function PlanejadorPage({ searchParams }: { searchParams: P
     <div className="grid gap-6">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-3xl font-extrabold tracking-tight">Planejador</h1>
+          <h1 className="font-display text-[2rem] leading-tight font-bold tracking-tight">Planejador</h1>
           <p className="mt-1 text-muted">Arraste os cards entre as colunas ou use as setas. Clique em um card para editar.</p>
         </div>
         <SeletorPerfil perfis={perfis} atual={perfil.handle} base="/planejador" />

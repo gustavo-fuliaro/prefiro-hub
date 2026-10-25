@@ -14,3 +14,6 @@ next-env.d.ts
 .DS_Store
 Thumbs.db
 supabase/.temp/
+# Capturas de revisão de design (locais)
+.impeccable/review/
+.impeccable/config.local.json

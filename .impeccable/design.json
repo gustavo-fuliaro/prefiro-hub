@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-25T17:30:00-03:00",
+  "title": "Design System: Prefiro Hub",
+  "extensions": {
+    "colorMeta": {
+      "laranja-institucional": { "role": "primary", "displayName": "Laranja Institucional", "canonical": "#ff7b00", "tonalRamp": ["#4a2300", "#753800", "#a04c00", "#cc6200", "#ff7b00", "#ff9a40", "#ffc18a", "#ffe6cf"] },
+      "laranja-claro": { "role": "secondary", "displayName": "Laranja Claro", "canonical": "#ffd8b3", "tonalRamp": ["#5c3a18", "#86552a", "#b0723d", "#d99657", "#f5b97e", "#ffd8b3", "#ffe8d2", "#fff5ec"] },
+      "cinza-escuro": { "role": "neutral", "displayName": "Cinza Escuro", "canonical": "#424241", "tonalRamp": ["#1c1c1b", "#2b2b2a", "#424241", "#5a5a59", "#7a7a79", "#a3a3a2", "#cfcfce", "#efefee"] },
+      "branco-premium": { "role": "neutral", "displayName": "Branco Premium", "canonical": "#faf8f5", "tonalRamp": ["#2f2e2c", "#57544f", "#7f7a73", "#a8a29a", "#cfc9c0", "#e9e4dd", "#f2efea", "#faf8f5"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display (Sora)", "purpose": "Título de cada tela." },
+      "headline": { "displayName": "Headline (Sora)", "purpose": "Números de destaque e títulos de diálogo." },
+      "body": { "displayName": "Body (Inter)", "purpose": "Textos e descrições." },
+      "label": { "displayName": "Label (Inter)", "purpose": "Rótulos de KPI e cabeçalhos de tabela, caixa alta." }
+    },
+    "shadows": [
+      { "name": "cartao", "value": "0 1px 2px rgb(66 66 65 / 0.06), 0 4px 14px -6px rgb(66 66 65 / 0.12)", "purpose": "Cartões, tabelas e controles segmentados." },
+      { "name": "flutuante", "value": "0 2px 4px rgb(66 66 65 / 0.08), 0 18px 40px -16px rgb(66 66 65 / 0.28)", "purpose": "Diálogos e cartões do planejador no hover." }
+    ],
+    "motion": [
+      { "name": "ease-out", "value": "cubic-bezier(0.23, 1, 0.32, 1)", "purpose": "Entradas e respostas de UI." },
+      { "name": "press", "value": "transform: scale(0.97) 160ms", "purpose": "Retorno ao pressionar botões." },
+      { "name": "pagina", "value": "opacity 0→1, translateY(6px→0), 260ms", "purpose": "Entrada do conteúdo a cada navegação." },
+      { "name": "dialogo", "value": "scale(0.96)+translateY(6px) → 1, 220ms", "purpose": "Entrada de diálogos." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" }
+    ]
+  },
+  "components": [
+    { "name": "Botão primário", "kind": "button", "refersTo": "button-primary", "description": "Ação principal da tela.", "html": "<button class=\"ds-btn-primary\">Atualizar semana atual</button>", "css": ".ds-btn-primary{background:#ff7b00;color:#1f1f1e;font:600 14px/1.4 Inter,sans-serif;padding:8px 16px;border:0;border-radius:10px;transition:transform 160ms cubic-bezier(.23,1,.32,1),filter 160ms}.ds-btn-primary:hover{filter:brightness(1.05)}.ds-btn-primary:active{transform:scale(.97)}.ds-btn-primary:focus-visible{outline:2px solid #ff7b00;outline-offset:2px}" },
+    { "name": "Botão secundário", "kind": "button", "refersTo": "button-secondary", "description": "Ação de apoio.", "html": "<button class=\"ds-btn-sec\">Imprimir ou salvar PDF</button>", "css": ".ds-btn-sec{background:#fff;color:#2f2f2e;font:500 14px/1.4 Inter,sans-serif;padding:6px 12px;border:1px solid #dcdcdb;border-radius:10px;transition:border-color 160ms,transform 160ms}.ds-btn-sec:hover{border-color:#ff7b00}.ds-btn-sec:active{transform:scale(.97)}" },
+    { "name": "Item do trilho", "kind": "nav", "refersTo": "nav-item-active", "description": "Menu lateral no cinza escuro; ativo em balão laranja.", "html": "<nav class=\"ds-rail\"><a class=\"ds-nav ds-ativo\">Progresso</a><a class=\"ds-nav\">Planejador</a></nav>", "css": ".ds-rail{background:#424241;padding:12px;display:grid;gap:4px;width:220px}.ds-nav{display:block;color:rgba(244,242,238,.85);font:400 14px/1.4 Inter,sans-serif;padding:8px 12px;border-radius:12px 12px 12px 4px;transition:background 150ms}.ds-nav:hover{background:#4f4f4e;color:#f4f2ee}.ds-ativo{background:#ff7b00;color:#1f1f1e;font-weight:600}" },
+    { "name": "Cartão em balão", "kind": "card", "refersTo": "card", "description": "Contêiner padrão com a ponta do balão.", "html": "<div class=\"ds-card\"><div class=\"ds-rot\">Seguidores (soma)</div><div class=\"ds-num\">95.231</div></div>", "css": ".ds-card{background:#fff;border:1px solid #dcdcdb;border-radius:14px 14px 14px 4px;padding:16px;box-shadow:0 1px 2px rgb(66 66 65/.06),0 4px 14px -6px rgb(66 66 65/.12);width:220px}.ds-rot{font:600 12px Inter,sans-serif;letter-spacing:.025em;text-transform:uppercase;color:#666}.ds-num{font:700 24px Sora,sans-serif;color:#2f2f2e;font-variant-numeric:tabular-nums;margin-top:4px}" },
+    { "name": "Campo de texto", "kind": "input", "refersTo": "input", "description": "Campo com foco laranja.", "html": "<input class=\"ds-input\" placeholder=\"@prefiroconsorcio\">", "css": ".ds-input{background:#faf8f5;color:#2f2f2e;border:1px solid #dcdcdb;border-radius:10px;padding:8px 12px;font:400 14px Inter,sans-serif;caret-color:#ff7b00;transition:border-color 160ms,box-shadow 160ms}.ds-input:focus-visible{outline:none;border-color:#ff7b00;box-shadow:0 0 0 3px rgb(255 123 0/.22)}" },
+    { "name": "Chip de destaque", "kind": "chip", "refersTo": "chip-destaque", "description": "Grupo do perfil, semana selecionada.", "html": "<span class=\"ds-chip\">Próprio</span>", "css": ".ds-chip{display:inline-block;background:#ffd8b3;color:#974500;font:600 12px Inter,sans-serif;padding:2px 10px;border-radius:9999px}" },
+    { "name": "Fala da Prefiro", "kind": "custom", "description": "Destaques da semana com a estrela.", "html": "<div class=\"ds-fala\"><svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\"><path fill=\"#ff7b00\" stroke=\"#ff7b00\" stroke-width=\"2.2\" stroke-linejoin=\"round\" d=\"M12 2.8l2.75 5.7 6.25.86-4.55 4.36 1.12 6.2L12 16.95l-5.57 2.97 1.12-6.2L3 9.36l6.25-.86z\"/></svg><p>@dancarlossilva foi quem mais ganhou seguidores: +21.</p></div>", "css": ".ds-fala{display:flex;gap:12px;align-items:flex-start;background:#fff1e3;border-radius:14px 14px 14px 4px;padding:16px;font:400 14px/1.5 Inter,sans-serif;color:#2f2f2e;max-width:420px}.ds-fala p{margin:0}" }
+  ],
+  "narrative": {
+    "northStar": "Diálogo que aproxima",
+    "overview": "O Hub é uma ferramenta de trabalho da Prefiro Consórcio, e fala como a marca. O balão de fala do logotipo é a gramática da interface: contêineres e o item ativo do menu têm cantos arredondados com uma ponta no inferior esquerdo, e a estrela do símbolo marca quem lidera. A marca vive nos detalhes; a estrutura é a de um painel claro e previsível.",
+    "keyCharacteristics": [
+      "Trilho escuro (#424241) com logotipo negativo oficial e respiro do tamanho do balão.",
+      "Cantos em balão (ponta no inferior esquerdo) em cartões, diálogos e item ativo.",
+      "Sora nos títulos e números, Inter no texto, algarismos tabulares em dados.",
+      "Estrela laranja marcando o líder; três linhas de mensagem como indicador de carregamento.",
+      "Modo escuro derivado dos cinzas da marca, com o trilho no mesmo cinza escuro."
+    ],
+    "rules": [
+      { "name": "The Laranja Tem Função Rule", "body": "O laranja institucional aparece onde há ação, seleção ou liderança. Nunca como enfeite de fundo dentro das telas de trabalho.", "section": "colors" },
+      { "name": "The Gradiente Só no Fundo Rule", "body": "O gradiente oficial só aparece em fundos e elementos gráficos. Nunca sobre ou dentro do logotipo.", "section": "colors" },
+      { "name": "The Número Tabular Rule", "body": "Todo dado numérico usa algarismos tabulares, e colunas numéricas não quebram linha.", "section": "typography" }
+    ],
+    "dos": [
+      "Do usar o logotipo só a partir de public/marca/ (positivo em fundo claro, negativo em fundo escuro), com respiro do tamanho do balão.",
+      "Do marcar o primeiro colocado com a estrela em um balão laranja.",
+      "Do usar ícones de traço único (2px, pontas arredondadas) de src/components/icones.tsx.",
+      "Do entrar o conteúdo da página uma vez por navegação (260ms, 6px), e respeitar prefers-reduced-motion."
+    ],
+    "donts": [
+      "Don't alterar cores, proporções ou diagramação do logotipo, nem colocá-lo sobre o gradiente.",
+      "Don't usar texto branco sobre o laranja institucional.",
+      "Don't usar faixa lateral colorida (border-left grossa) em cartões, alertas ou listas.",
+      "Don't usar rótulo em caixa alta acima de um título (sobretítulo).",
+      "Don't usar caracteres Unicode ou emoji no lugar de ícones."
+    ]
+  }
+}

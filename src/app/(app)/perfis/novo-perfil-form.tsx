@@ -13,7 +13,7 @@ export function NovoPerfilForm() {
   }, [estado]);
 
   return (
-    <form ref={formRef} action={enviar} className="grid gap-3 rounded-xl border border-line bg-surface p-5 md:grid-cols-[1.2fr_1fr_1fr_auto] md:items-end">
+    <form ref={formRef} action={enviar} className="grid gap-3 rounded-balao border border-line bg-surface p-5 lg:grid-cols-[1.2fr_1fr_1fr_auto] lg:items-end shadow-card">
       <label className="grid gap-1 text-sm font-medium">
         @ ou link do perfil
         <input id="handle" name="handle" required placeholder="@prefiroconsorcio" className="rounded-md border border-line bg-bg px-3 py-2 font-normal" />
@@ -35,9 +35,9 @@ export function NovoPerfilForm() {
       <button type="submit" disabled={pendente} className="rounded-md bg-accent px-4 py-2 font-semibold text-accent-ink disabled:opacity-60">
         {pendente ? "Salvando…" : "Adicionar"}
       </button>
-      <p aria-live="polite" className="text-sm md:col-span-4">
+      <p aria-live="polite" className="text-sm lg:col-span-4">
         {estado.erro && <span className="text-danger">{estado.erro}</span>}
-        {estado.ok && <span className="text-accent">{estado.ok}</span>}
+        {estado.ok && <span className="text-accent-strong">{estado.ok}</span>}
       </p>
     </form>
   );

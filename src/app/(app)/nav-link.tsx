@@ -3,14 +3,15 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+// Item do trilho lateral. O ativo vira um balão laranja (a ponta no canto inferior esquerdo).
 export function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
   const ativo = usePathname().startsWith(href);
   return (
     <Link
       href={href}
       aria-current={ativo ? "page" : undefined}
-      className={`rounded-md px-3 py-2 text-sm font-medium ${
-        ativo ? "bg-accent-soft text-accent" : "text-ink hover:bg-bg"
+      className={`block shrink-0 rounded-balao-sm px-3 py-2 text-sm transition-colors duration-150 ${
+        ativo ? "bg-accent font-semibold text-accent-ink" : "text-rail-ink/85 hover:bg-rail-hover hover:text-rail-ink"
       }`}
     >
       {children}

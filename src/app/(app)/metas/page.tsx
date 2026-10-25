@@ -69,7 +69,7 @@ export default async function MetasPage() {
   return (
     <div className="grid max-w-6xl gap-6">
       <header>
-        <h1 className="font-display text-3xl font-extrabold tracking-tight">Metas</h1>
+        <h1 className="font-display text-[2rem] leading-tight font-bold tracking-tight">Metas</h1>
         <p className="mt-1 text-muted">
           Alvos por perfil, com a previsão de quando cada um será atingido no ritmo dos últimos 30 dias. Metas fora do ritmo geram um alerta por semana.
         </p>
@@ -78,7 +78,7 @@ export default async function MetasPage() {
       {pode && <NovaMetaForm perfis={proprios.length ? proprios : dados.perfis} amanha={amanha} />}
 
       {linhas.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-line px-6 py-10 text-center">
+        <div className="rounded-balao border border-dashed border-line px-6 py-10 text-center">
           <p className="font-medium">Nenhuma meta criada.</p>
           <p className="mt-1 text-sm text-muted">Exemplo: @prefiroconsorcio com 20.000 seguidores até 31/03.</p>
         </div>
@@ -87,11 +87,11 @@ export default async function MetasPage() {
           {linhas.map(({ m, atual, ritmo, av, status }) => {
             const p = porId.get(m.perfil_id)!;
             return (
-              <li key={m.id} className="grid gap-3 rounded-xl border border-line bg-surface p-4">
+              <li key={m.id} className="grid gap-3 rounded-balao border border-line bg-surface p-4 shadow-card">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <Link href={`/perfis/${p.handle}`} className="text-sm font-semibold text-accent hover:underline">@{p.handle}</Link>
-                    <div className="font-display text-xl font-extrabold">
+                    <Link href={`/perfis/${p.handle}`} className="text-sm font-semibold text-accent-strong hover:underline">@{p.handle}</Link>
+                    <div className="font-display text-xl font-bold">
                       {METRICAS_META[m.metrica].rotulo}: {valor(m.metrica, Number(m.alvo))}
                     </div>
                     <div className="text-xs text-muted">Prazo {data(m.prazo)} · criada em {data(m.inicio)}</div>

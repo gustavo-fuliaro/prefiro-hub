@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { IconeFechar } from "@/components/icones";
 import { useEffect, useRef, useState, useTransition } from "react";
 import type { PerfilCurto, PostCurto } from "@/lib/dados-planejador";
 import { AMBIENTES, COLUNAS, FORMATOS, STATUS_PRODUCAO, partesSP, type Coluna, type Ideia } from "@/lib/planejador";
@@ -67,16 +68,16 @@ export function IdeiaDialog({
     <dialog
       ref={ref}
       onClose={aoFechar}
-      className="m-auto w-[min(720px,calc(100vw-32px))] rounded-xl border border-line bg-surface p-0 text-ink backdrop:bg-black/50"
+      className="m-auto w-[min(720px,calc(100vw-32px))] rounded-balao border border-line bg-surface p-0 text-ink backdrop:bg-black/50 shadow-card"
     >
       <form action={enviar} className="grid max-h-[85dvh] gap-4 overflow-y-auto p-6">
         <header className="flex items-start justify-between gap-4">
           <div>
-            <div className="text-xs font-semibold uppercase tracking-wide text-accent">@{perfil.handle}</div>
-            <h2 className="font-display text-2xl font-extrabold">{ideia ? "Editar ideia" : "Nova ideia"}</h2>
+            <h2 className="font-display text-2xl font-bold">{ideia ? "Editar ideia" : "Nova ideia"}</h2>
+            <p className="mt-0.5 text-sm text-muted">@{perfil.handle}</p>
           </div>
-          <button type="button" onClick={() => ref.current?.close()} className="rounded-md px-2 py-1 text-muted hover:text-ink" aria-label="Fechar">
-            ✕
+          <button type="button" onClick={() => ref.current?.close()} className="grid size-9 place-items-center rounded-md text-muted hover:bg-bg hover:text-ink" aria-label="Fechar">
+            <IconeFechar />
           </button>
         </header>
 
@@ -208,12 +209,12 @@ export function IdeiaDialog({
               </span>
             )}
             {ideia && (
-              <Link href={`/briefings?perfil=${perfil.handle}#ideia-${ideia.id}`} className="text-sm text-accent hover:underline">
+              <Link href={`/briefings?perfil=${perfil.handle}#ideia-${ideia.id}`} className="text-sm text-accent-strong hover:underline">
                 Abrir briefing
               </Link>
             )}
             {ideia && podeEditar && iaLiberada && (
-              <Link href={`/estudio?perfil=${perfil.handle}&tipo=roteiro&ideia=${ideia.id}`} className="text-sm text-accent hover:underline">
+              <Link href={`/estudio?perfil=${perfil.handle}&tipo=roteiro&ideia=${ideia.id}`} className="text-sm text-accent-strong hover:underline">
                 Roteiro com IA
               </Link>
             )}

@@ -48,7 +48,7 @@ export default async function PerfisPage() {
     <div className="grid max-w-6xl gap-6">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-3xl font-extrabold tracking-tight">Perfis monitorados</h1>
+          <h1 className="font-display text-[2rem] leading-tight font-bold tracking-tight">Perfis monitorados</h1>
           <p className="mt-1 text-muted">Números atualizados todo dia às 06:00. Clique em um perfil para ver o cockpit.</p>
         </div>
         {pode && perfis.length > 0 && <ColetarBotao />}
@@ -61,12 +61,12 @@ export default async function PerfisPage() {
           Não foi possível carregar os perfis. Tente recarregar a página.
         </p>
       ) : perfis.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-line px-6 py-10 text-center">
+        <div className="rounded-balao border border-dashed border-line px-6 py-10 text-center">
           <p className="font-medium">Nenhum perfil cadastrado ainda.</p>
           <p className="mt-1 text-sm text-muted">Comece pelos perfis da Prefiro e depois adicione os concorrentes.</p>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-line bg-surface">
+        <div className="overflow-x-auto rounded-balao border border-line bg-surface shadow-card">
           <table className="w-full min-w-[760px] text-left text-sm">
             <thead className="text-xs uppercase tracking-wide text-muted">
               <tr className="border-b border-line">
@@ -86,7 +86,7 @@ export default async function PerfisPage() {
                     <Link href={`/perfis/${p.handle}`} className="flex items-center gap-3">
                       <Avatar caminho={p.foto_path} handle={p.handle} />
                       <span className="min-w-0">
-                        <span className="block font-medium text-accent">@{p.handle}</span>
+                        <span className="block font-medium text-accent-strong">@{p.handle}</span>
                         {p.nome && <span className="block truncate text-muted">{p.nome}</span>}
                       </span>
                     </Link>

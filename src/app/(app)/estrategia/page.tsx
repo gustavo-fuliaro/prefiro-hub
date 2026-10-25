@@ -26,7 +26,7 @@ export default async function EstrategiaPage({ searchParams }: { searchParams: P
     <div className="grid max-w-4xl gap-6">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-3xl font-extrabold tracking-tight">Estratégia</h1>
+          <h1 className="font-display text-[2rem] leading-tight font-bold tracking-tight">Estratégia</h1>
           <p className="mt-1 text-muted">Pilares e posicionamento de cada perfil próprio. O estúdio de IA usa estas respostas em toda geração.</p>
         </div>
         <SeletorPerfil perfis={perfis} atual={perfil.handle} base="/estrategia" />
