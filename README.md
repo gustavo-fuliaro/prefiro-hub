@@ -131,6 +131,6 @@ Supabase gratuito ou Pro, hospedagem Node.js que você já tenha e a API da Anth
 
 ## Licença
 
-[GNU AGPL-3.0](LICENSE). Você pode usar, modificar e hospedar o Prefiro Hub livremente. Se oferecer uma versão modificada para outras pessoas usarem pela internet, precisa disponibilizar o código-fonte dessa versão sob a mesma licença.
+[GNU AGPL-3.0](LICENSE). Você pode usar, modificar e hospedar o Prefiro Hub livremente. Se oferecer uma versão modificada para outras pessoas usarem pela internet, precisa disponibilizar o código-fonte dessa versão sob a mesma licença. O menu do app tem um link "Código-fonte"; numa versão modificada, aponte-o para o seu repositório com a variável `NEXT_PUBLIC_CODIGO_FONTE_URL`.
 
 Copyright (C) 2026 Prefiro Consórcio.

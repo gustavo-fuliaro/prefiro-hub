@@ -5,7 +5,10 @@ import { createClient } from "@/lib/supabase/server";
 import { sair } from "./actions";
 import { NavLink } from "./nav-link";
 
-const PAPEL_LABEL = { admin: "Admin", estrategista: "Estrategista", criador: "Criador", leitura: "Leitura" };
+// A AGPL pede que quem usa o app pela internet consiga chegar ao código. Quem fizer um fork deve trocar este endereço.
+const CODIGO_FONTE = process.env.NEXT_PUBLIC_CODIGO_FONTE_URL || "https://github.com/gustavo-fuliaro/prefiro-hub";
+
+const PAPEL_LABEL ={ admin: "Admin", estrategista: "Estrategista", criador: "Criador", leitura: "Leitura" };
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const { email, membro } = await membroAtual();
@@ -61,6 +64,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
               Sair
             </button>
           </form>
+          <a href={CODIGO_FONTE} target="_blank" rel="noopener noreferrer" className="text-xs text-muted underline-offset-4 hover:underline">
+            Código-fonte (AGPL-3.0)
+          </a>
         </div>
       </aside>
       <main className="min-w-0 px-4 py-8 md:px-10">
