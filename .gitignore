@@ -1,0 +1,16 @@
+node_modules/
+.next/
+out/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+.env
+.env.local
+.env.*.local
+# Configuração da instalação (cada empresa usa a sua; o modelo é o .env.example)
+.env.production
+.env.development
+.vercel
+.DS_Store
+Thumbs.db
+supabase/.temp/
