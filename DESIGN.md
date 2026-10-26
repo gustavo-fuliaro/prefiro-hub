@@ -196,7 +196,7 @@ A forma-assinatura é o balão de fala: cantos de 14px com o inferior esquerdo e
 - **Focus:** borda laranja com halo laranja translúcido de 3px; cursor de texto laranja.
 
 ### Navigation
-- **Trilho:** Cinza Escuro, texto claro; item ativo em balão laranja sólido com texto escuro; hover em cinza um tom acima. "Usuários" só aparece para a conta administradora principal.
+- **Trilho:** Cinza Escuro, texto claro; item ativo em balão laranja sólido com texto escuro; hover em cinza um tom acima. "Usuários" só aparece para admins. Áreas em breve ficam esmaecidas, com cadeado à direita. Cartão do Kanban: atrasado em Vermelho Suave com borda vermelha, concluído em Verde Suave com borda verde; ações rápidas aparecem no hover (no toque, só o menu ⋯). Detalhes da tarefa abrem numa gaveta à direita.
 - **Sino de notificações:** no canto superior direito do conteúdo (no celular, na barra escura do topo). Botão de 40px em balão, contador em pílula vermelha; o painel cresce do sino (180ms), não lidas em Laranja Bruma com ponto da severidade.
 
 ### Fala da Prefiro

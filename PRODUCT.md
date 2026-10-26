@@ -12,7 +12,7 @@ Multiusuário. A conta administradora principal é a da Prefiro Consórcio (equi
 
 ## Product Purpose
 
-Acompanhar, comparar e planejar o conteúdo dos perfis de Instagram da empresa e do time (hoje: @prefiroconsorcio, @dancarlossilva, @mpeeducacao). Sucesso é a equipe planejar a semana inteira no Hub e enxergar, toda segunda, o que cresceu e o que funcionou.
+Acompanhar, comparar e planejar o conteúdo dos perfis de Instagram da empresa e do time (hoje: @prefiroconsorcio, @dancarlossilva, @mpeeducacao). Sucesso é a equipe tocar a produção inteira no Planejador e enxergar, toda sexta, o que foi produzido, o que travou e o que funcionou.
 
 ## Positioning
 
@@ -20,8 +20,8 @@ Ferramenta feita para o dia a dia de uma corretora de consórcio 100% digital: u
 
 ## Operating Context
 
-- Coleta automática diária (06:00), alertas (06:20) e relatório semanal (segunda, 08:00).
-- Fluxo: Perfis e Comparativo para ler números; Metas e o sino de notificações para acompanhar; Planejador, Calendário e Briefings para produzir; Progresso para o relatório semanal, impresso ou salvo em PDF; Usuários (só a conta principal) para gerenciar acessos.
+- Coleta automática diária (06:00), alertas (06:20) e relatório semanal (sexta, 06:00). Tarefas atrasadas e arquivamento automático a cada 15 minutos.
+- Fluxo: Perfis e Comparativo para ler números; Metas e o sino de notificações para acompanhar; Planejador (Kanban ao vivo) e Calendário para produzir; Progresso para a produção ao vivo e os relatórios, impressos ou salvos em PDF; Usuários (admins) para montar a equipe. Briefing, Arsenal de Stories e Iscas Digitais estão bloqueados (em breve).
 - Estratégia e Estúdio de IA foram removidos em 26/10/2026 (os dados antigos ficam guardados no banco).
 
 ## Capabilities and Constraints
@@ -47,4 +47,4 @@ Ferramenta feita para o dia a dia de uma corretora de consórcio 100% digital: u
 1. Números primeiro: o que mudou e o que fazer a seguir deve ser legível em segundos.
 2. Uma ferramenta de trabalho, não uma vitrine: a marca aparece nos detalhes, sem atrapalhar a leitura.
 3. Nada inventado: a interface só mostra o que os dados sustentam.
-4. Planejar e medir no mesmo lugar: cada ideia leva ao post e ao resultado.
+4. Planejar e medir no mesmo lugar: a produção da equipe e o resultado no Instagram no mesmo relatório.

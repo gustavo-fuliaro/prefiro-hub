@@ -69,3 +69,83 @@ export const IconeIndicador = ({ tipo, className = "size-4" }: P & { tipo: "segu
     {tipo === "engajamento" && <path d="M3 12h4l3-8 4 16 3-8h4" />}
   </svg>
 );
+
+export const IconeCadeado = ({ className = "size-4" }: P) => (
+  <svg {...base} className={className}>
+    <rect x="5" y="11" width="14" height="10" rx="2" />
+    <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+  </svg>
+);
+
+export const IconeCheck = ({ className = "size-4" }: P) => (
+  <svg {...base} className={className}>
+    <path d="M5 12.5l4.5 4.5L19 7.5" />
+  </svg>
+);
+
+export const IconeLapis = ({ className = "size-4" }: P) => (
+  <svg {...base} className={className}>
+    <path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4z" />
+    <path d="M13.5 6.5l4 4" />
+  </svg>
+);
+
+export const IconeArquivar = ({ className = "size-4" }: P) => (
+  <svg {...base} className={className}>
+    <rect x="3" y="4" width="18" height="5" rx="1" />
+    <path d="M5 9v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9M10 13h4" />
+  </svg>
+);
+
+export const IconeRestaurar = ({ className = "size-4" }: P) => (
+  <svg {...base} className={className}>
+    <path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4h4" />
+  </svg>
+);
+
+export const IconeReticencias = ({ className = "size-4" }: P) => (
+  <svg {...base} className={className}>
+    <path d="M5 12h.01M12 12h.01M19 12h.01" strokeWidth={3} />
+  </svg>
+);
+
+export const IconeComentario = ({ className = "size-4" }: P) => (
+  <svg {...base} className={className}>
+    <path d="M4 5h16v11H9l-5 4V5z" />
+  </svg>
+);
+
+export const IconeCalendario = ({ className = "size-4" }: P) => (
+  <svg {...base} className={className}>
+    <rect x="4" y="5" width="16" height="15" rx="2" />
+    <path d="M4 10h16M9 3v4M15 3v4" />
+  </svg>
+);
+
+export const IconeRelogio = ({ className = "size-4" }: P) => (
+  <svg {...base} className={className}>
+    <circle cx="12" cy="12" r="8" />
+    <path d="M12 8v4l2.5 2.5" />
+  </svg>
+);
+
+export const IconeLink = ({ className = "size-4" }: P) => (
+  <svg {...base} className={className}>
+    <path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1" />
+    <path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" />
+  </svg>
+);
+
+export const IconeBusca = ({ className = "size-4" }: P) => (
+  <svg {...base} className={className}>
+    <circle cx="11" cy="11" r="6.5" />
+    <path d="M16 16l4 4" />
+  </svg>
+);
+
+export const IconePessoa = ({ className = "size-4" }: P) => (
+  <svg {...base} className={className}>
+    <circle cx="12" cy="8" r="3.5" />
+    <path d="M5 20a7 7 0 0 1 14 0" />
+  </svg>
+);

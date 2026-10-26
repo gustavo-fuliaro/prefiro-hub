@@ -8,8 +8,8 @@ export const metadata: Metadata = { title: "Usuários" };
 
 export default async function UsuariosPage() {
   const { membro } = await membroAtual();
-  // Só a conta administradora principal enxerga esta área. A Edge Function faz a mesma checagem.
-  if (!membro?.super_admin || !membro.ativo) notFound();
+  // Conta principal (todos os ambientes) ou admin do ambiente (só a própria equipe). A Edge Function faz a mesma checagem.
+  if (!membro?.ativo || !(membro.super_admin || membro.papel === "admin")) notFound();
 
   const r = await chamarGestao({ acao: "listar" });
 
@@ -19,14 +19,16 @@ export default async function UsuariosPage() {
         <div>
           <h1 className="font-display text-[2rem] leading-tight font-bold tracking-tight">Usuários</h1>
           <p className="mt-1 text-muted">
-            Cada usuário tem um ambiente próprio, com perfis, métricas, relatórios e alertas só dele. Daqui você libera, bloqueia e gerencia o acesso, sem ver os dados dos outros ambientes.
+            {membro.super_admin
+              ? "Cadastre a equipe do seu ambiente ou crie ambientes novos e isolados para outras empresas. Daqui você libera, bloqueia e gerencia o acesso, sem ver os dados dos outros ambientes."
+              : "Cadastre e gerencie a equipe do seu ambiente. Todos da equipe veem os mesmos perfis, tarefas e relatórios, cada um com o seu papel."}
           </p>
         </div>
       </header>
       {r.erro ? (
         <p role="alert" className="rounded-md bg-danger-soft px-4 py-3 text-danger">{r.erro}</p>
       ) : (
-        <GestaoUsuarios usuarios={r.usuarios ?? []} eu={membro.user_id} />
+        <GestaoUsuarios usuarios={r.usuarios ?? []} eu={membro.user_id} superAdmin={membro.super_admin} minhaConta={membro.conta_id} />
       )}
     </div>
   );

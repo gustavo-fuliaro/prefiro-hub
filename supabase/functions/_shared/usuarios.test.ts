@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { gerarSenhaProvisoria, lerPedido, problemaSenha, protegeSuperAdmin, validarEmail, validarNome } from "./usuarios";
+import { gerarSenhaProvisoria, lerPedido, podeAgirSobre, podeCriar, podeGerirUsuarios, problemaSenha, protegeSuperAdmin, validarEmail, validarNome } from "./usuarios";
 
 const ID = "00000000-0000-4000-8000-000000000001";
 
@@ -36,7 +36,7 @@ describe("gerarSenhaProvisoria", () => {
 describe("lerPedido", () => {
   it("aceita um cadastro com senha gerada pelo sistema", () => {
     expect(lerPedido({ acao: "criar", nome: "Ana", email: "ana@x.com" })).toEqual({
-      pedido: { acao: "criar", nome: "Ana", email: "ana@x.com", senha: null },
+      pedido: { acao: "criar", nome: "Ana", email: "ana@x.com", senha: null, papel: "admin", destino: "novo_ambiente" },
     });
   });
 
@@ -65,5 +65,41 @@ describe("lerPedido", () => {
     expect(protegeSuperAdmin("status")).toBe(true);
     expect(protegeSuperAdmin("redefinir_senha")).toBe(true);
     expect(protegeSuperAdmin("editar")).toBe(false);
+  });
+});
+
+describe("equipes no mesmo ambiente", () => {
+  const principal = { user_id: "p", conta_id: 1, super_admin: true, papel: "admin", ativo: true };
+  const adminB = { user_id: "b", conta_id: 2, super_admin: false, papel: "admin", ativo: true };
+  const criadorB = { ...adminB, user_id: "c", papel: "criador" };
+
+  it("lê papel e destino do cadastro", () => {
+    expect(lerPedido({ acao: "criar", nome: "Ana", email: "ana@x.com", destino: "equipe" })).toHaveProperty("pedido.papel", "criador");
+    expect(lerPedido({ acao: "criar", nome: "Ana", email: "ana@x.com", destino: "equipe", papel: "estrategista" })).toHaveProperty("pedido.papel", "estrategista");
+    expect(lerPedido({ acao: "criar", nome: "Ana", email: "ana@x.com", papel: "dono" })).toEqual({ erro: "Escolha um papel válido." });
+    expect(lerPedido({ acao: "papel", user_id: ID, papel: "leitura" })).toEqual({ pedido: { acao: "papel", user_id: ID, papel: "leitura" } });
+    expect(lerPedido({ acao: "papel", user_id: ID, papel: "super" })).toHaveProperty("erro");
+  });
+
+  it("só admin ativo ou conta principal gerencia usuários", () => {
+    expect(podeGerirUsuarios(principal)).toBe(true);
+    expect(podeGerirUsuarios(adminB)).toBe(true);
+    expect(podeGerirUsuarios(criadorB)).toBe(false);
+    expect(podeGerirUsuarios({ ...adminB, ativo: false })).toBe(false);
+    expect(podeGerirUsuarios(null)).toBe(false);
+  });
+
+  it("admin de ambiente só age no próprio ambiente e nunca na conta principal", () => {
+    expect(podeAgirSobre(adminB, { user_id: "x", conta_id: 2, super_admin: false })).toBe(true);
+    expect(podeAgirSobre(adminB, { user_id: "x", conta_id: 1, super_admin: false })).toBe(false);
+    expect(podeAgirSobre(adminB, { user_id: "p", conta_id: 2, super_admin: true })).toBe(false);
+    expect(podeAgirSobre(principal, { user_id: "x", conta_id: 2, super_admin: false })).toBe(true);
+  });
+
+  it("ambiente novo é exclusivo da conta principal", () => {
+    expect(podeCriar(principal, "novo_ambiente")).toBe(true);
+    expect(podeCriar(adminB, "novo_ambiente")).toBe(false);
+    expect(podeCriar(adminB, "equipe")).toBe(true);
+    expect(podeCriar(criadorB, "equipe")).toBe(false);
   });
 });

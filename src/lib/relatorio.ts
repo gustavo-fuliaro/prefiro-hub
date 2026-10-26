@@ -1,4 +1,5 @@
-// Relatório semanal: leitura do jsonb gravado por hub.gerar_relatorio_semanal e cálculos derivados.
+// Relatórios: leitura do jsonb gravado no banco (formato 1, antigo de segunda; formato 2, de sexta e por período)
+// e cálculos derivados.
 // Funções puras, sem rede.
 
 export type PerfilRel = {
@@ -105,7 +106,8 @@ export type LinhaPerfil = PerfilRel & {
   coberturaIncompleta: boolean;
 };
 
-export function linhasPerfis(perfis: PerfilRel[]): LinhaPerfil[] {
+// diasPeriodo: dias do relatório (7 no semanal); menos leituras que isso marca a cobertura como incompleta.
+export function linhasPerfis(perfis: PerfilRel[], diasPeriodo = 7): LinhaPerfil[] {
   const ganhos = perfis.map((p) => (p.seguidores_inicio !== null && p.seguidores_fim !== null ? p.seguidores_fim - p.seguidores_inicio : null));
   const somaPositivos = ganhos.reduce<number>((s, g) => s + Math.max(0, g ?? 0), 0);
   return perfis.map((p, i) => {
@@ -116,7 +118,7 @@ export function linhasPerfis(perfis: PerfilRel[]): LinhaPerfil[] {
       crescimentoPct: ganho !== null && p.seguidores_inicio ? (ganho / p.seguidores_inicio) * 100 : null,
       shareCrescimento: ganho === null || somaPositivos <= 0 ? null : Math.max(0, ganho) / somaPositivos,
       mediaInteracoes: p.posts > 0 ? p.interacoes / p.posts : null,
-      coberturaIncompleta: p.dias_coletados < 7,
+      coberturaIncompleta: p.dias_coletados < diasPeriodo,
     };
   });
 }
@@ -159,7 +161,7 @@ export function destaques(linhas: LinhaPerfil[], top: PostRel[]): string[] {
     frases.push(`@${l.handle} foi quem mais ganhou seguidores: ${sinal(l.ganho as number)}.`);
   }
   const perdendo = crescendo.filter((l) => (l.ganho as number) < 0);
-  if (perdendo.length) frases.push(`${perdendo.map((l) => `@${l.handle}`).join(", ")} ${perdendo.length > 1 ? "perderam" : "perdeu"} seguidores na semana.`);
+  if (perdendo.length) frases.push(`${perdendo.map((l) => `@${l.handle}`).join(", ")} ${perdendo.length > 1 ? "perderam" : "perdeu"} seguidores no período.`);
   const parados = linhas.filter((l) => l.posts === 0);
   if (parados.length) frases.push(`${parados.map((l) => `@${l.handle}`).join(", ")} não ${parados.length > 1 ? "publicaram" : "publicou"} nada.`);
   if (top[0] && top[0].interacoes > 0) frases.push(`Melhor post: @${top[0].handle}, com ${inteiro.format(top[0].interacoes)} interações.`);

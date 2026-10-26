@@ -3,13 +3,24 @@
 
 export const SENHA_MIN = 10;
 
+export type Papel = "admin" | "estrategista" | "criador" | "leitura";
+export const PAPEIS: Papel[] = ["admin", "estrategista", "criador", "leitura"];
+// novo_ambiente: a pessoa ganha um ambiente vazio e só dela (só a conta principal faz).
+// equipe: a pessoa entra no ambiente de quem cadastrou e vê os mesmos dados.
+export type Destino = "novo_ambiente" | "equipe";
+
 export type Pedido =
   | { acao: "listar" }
-  | { acao: "criar"; nome: string; email: string; senha: string | null }
+  | { acao: "criar"; nome: string; email: string; senha: string | null; papel: Papel; destino: Destino }
   | { acao: "editar"; user_id: string; nome: string; email: string }
+  | { acao: "papel"; user_id: string; papel: Papel }
   | { acao: "status"; user_id: string; ativo: boolean }
   | { acao: "redefinir_senha"; user_id: string }
   | { acao: "excluir"; user_id: string };
+
+export function lerPapel(v: unknown): Papel | null {
+  return typeof v === "string" && (PAPEIS as string[]).includes(v) ? (v as Papel) : null;
+}
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -74,7 +85,10 @@ export function lerPedido(corpo: unknown): { pedido: Pedido } | { erro: string }
         const p = problemaSenha(senha);
         if (p) return { erro: p };
       }
-      return { pedido: { acao: "criar", nome, email, senha } };
+      const destino: Destino = c.destino === "equipe" ? "equipe" : "novo_ambiente";
+      const papel = c.papel === undefined || c.papel === null || c.papel === "" ? (destino === "equipe" ? "criador" : "admin") : lerPapel(c.papel);
+      if (!papel) return { erro: "Escolha um papel válido." };
+      return { pedido: { acao: "criar", nome, email, senha, papel, destino } };
     }
     case "editar": {
       if (!userId) return { erro: "Usuário inválido." };
@@ -83,6 +97,12 @@ export function lerPedido(corpo: unknown): { pedido: Pedido } | { erro: string }
       const email = validarEmail(c.email);
       if (!email) return { erro: "Informe um e-mail válido." };
       return { pedido: { acao: "editar", user_id: userId, nome, email } };
+    }
+    case "papel": {
+      if (!userId) return { erro: "Usuário inválido." };
+      const papel = lerPapel(c.papel);
+      if (!papel) return { erro: "Escolha um papel válido." };
+      return { pedido: { acao: "papel", user_id: userId, papel } };
     }
     case "status":
       if (!userId) return { erro: "Usuário inválido." };
@@ -101,5 +121,24 @@ export function lerPedido(corpo: unknown): { pedido: Pedido } | { erro: string }
 
 // Ações que não podem atingir a conta administradora principal.
 export function protegeSuperAdmin(acao: Pedido["acao"]): boolean {
-  return acao === "status" || acao === "excluir" || acao === "redefinir_senha";
+  return acao === "status" || acao === "excluir" || acao === "redefinir_senha" || acao === "papel";
+}
+
+export type Gestor = { user_id: string; conta_id: number; super_admin: boolean; papel: string; ativo: boolean };
+export type Alvo = { user_id: string; conta_id: number; super_admin: boolean };
+
+// Quem pode gerenciar usuários: a conta principal (todos os ambientes) ou um admin ativo (só o próprio ambiente).
+export function podeGerirUsuarios(g: Gestor | null): boolean {
+  return !!g && g.ativo && (g.super_admin || g.papel === "admin");
+}
+
+// Pode agir sobre aquele usuário? Admin de ambiente só mexe no próprio ambiente e nunca na conta principal.
+export function podeAgirSobre(g: Gestor, alvo: Alvo): boolean {
+  if (g.super_admin) return true;
+  return g.papel === "admin" && alvo.conta_id === g.conta_id && !alvo.super_admin;
+}
+
+// Admin de ambiente só cadastra na própria equipe; ambiente novo é exclusivo da conta principal.
+export function podeCriar(g: Gestor, destino: Destino): boolean {
+  return destino === "equipe" ? podeGerirUsuarios(g) : g.super_admin && g.ativo;
 }

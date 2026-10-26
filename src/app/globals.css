@@ -277,6 +277,44 @@ dialog::backdrop {
   }
 }
 
+/* Menu de ações (⋯): cresce a partir do botão. */
+.menu-acoes {
+  transform-origin: top right;
+  animation: painel-entra 140ms var(--ease-out);
+}
+
+/* Gaveta de detalhes: entra pela direita, ocupando a altura da tela. */
+dialog.gaveta {
+  margin: 0 0 0 auto;
+  height: 100dvh;
+  max-height: 100dvh;
+  animation: gaveta-entra 240ms var(--ease-out);
+}
+@keyframes gaveta-entra {
+  from {
+    opacity: 0.6;
+    transform: translateX(24px);
+  }
+}
+
+/* Cartão do Kanban: ações rápidas aparecem ao passar o mouse ou focar (no toque ficam no menu ⋯). */
+.cartao-tarefa .acoes-rapidas {
+  opacity: 0;
+  transition: opacity 120ms var(--ease-out);
+}
+.cartao-tarefa:hover .acoes-rapidas,
+.cartao-tarefa:focus-within .acoes-rapidas {
+  opacity: 1;
+}
+@media (hover: none) {
+  .cartao-tarefa .acoes-rapidas {
+    display: none;
+  }
+}
+.cartao-tarefa[data-arrastando] {
+  opacity: 0.45;
+}
+
 /* Mosaico do login: peças entram em sequência, uma vez. */
 .mosaico-peca {
   animation: peca-entra 520ms var(--ease-out) both;

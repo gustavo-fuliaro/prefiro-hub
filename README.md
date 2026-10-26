@@ -1,6 +1,6 @@
 # Prefiro Hub
 
-Painel open source para acompanhar, comparar e planejar o conteúdo de vários perfis do Instagram. Feito pela Prefiro Consórcio e multiusuário: cada usuário tem um ambiente próprio e isolado.
+Painel open source para acompanhar, comparar e planejar o conteúdo de vários perfis do Instagram. Feito pela Prefiro Consórcio e multiusuário: cada ambiente (empresa) é isolado, e cada ambiente pode ter a sua equipe.
 
 ## O que faz
 
@@ -9,16 +9,17 @@ Painel open source para acompanhar, comparar e planejar o conteúdo de vários p
 | **Perfis** | Cadastro e exclusão dos perfis (próprios, time, parceiros, concorrentes) e cockpit de cada um: seguidores, views, curtidas, comentários, posts por dia e engajamento no tempo, desempenho dos últimos 8 posts e posts com miniaturas. |
 | **Comparativo** | Ranking e participação de cada perfil em audiência, crescimento, engajamento e volume de posts. |
 | **Metas** | Alvos por perfil (seguidores, engajamento, posts no mês) com previsão de quando serão atingidos. |
-| **Planejador** | Quadro de ideias por perfil, com arrastar e soltar, e ligação da ideia ao post publicado. |
-| **Calendário** | Postagens planejadas de todos os perfis. |
-| **Briefings** | Roteiro, checklist e ambiente de gravação de cada ideia. |
-| **Progresso** | Relatório semanal automático (segunda, 8h): ganho de seguidores, posts, interações, melhores posts, metas e ideias publicadas. Dá para imprimir ou salvar em PDF. |
+| **Planejador** | Kanban de produção (Roteirização → Em gravação → Edição / Design → Pronto para postar → Agendado / Publicado) com arrastar e soltar, responsável, datas, links de roteiro e Drive, comentários, histórico, busca e filtros. Atualiza ao vivo para toda a equipe. Atrasadas ficam vermelhas e avisam no sino; concluídas ficam verdes. |
+| **Arquivados** | Tarefas tiradas do quadro. Publicadas são arquivadas sozinhas 7 dias após a publicação. Dá para buscar, filtrar por período, ver detalhes, restaurar e excluir. |
+| **Calendário** | Tarefas com data de publicação, inclusive as arquivadas, com produção, agendado, publicado e arquivado diferenciados. |
+| **Progresso** | Produção ao vivo (por etapa e por responsável), relatório semanal automático toda sexta às 6h e relatório de qualquer período, com comparação e gargalos. Separa produtividade (histórico das tarefas) e Instagram (só métricas que a Meta entrega). |
+| **Briefing, Arsenal de Stories, Iscas Digitais** | Em breve: aparecem com cadeado e só mostram a tela explicativa. Os briefings antigos continuam guardados no banco. |
 | **Notificações** (sino no topo) | Queda de seguidores, post acima da média, meta fora do ritmo, falha na coleta e relatório pronto, com contador de não lidas. |
-| **Usuários** (só a conta principal) | Cadastrar, editar, bloquear, liberar e excluir usuários, e gerar senha provisória. |
+| **Usuários** (admins) | Montar a equipe do ambiente com papéis, editar, bloquear, liberar, excluir e gerar senha provisória. A conta principal também cria ambientes novos e isolados. |
 
 ## Multiusuário e isolamento
 
-- Cada usuário pertence a uma **conta** (ambiente). Perfis, números coletados, posts, metas, ideias, briefings, relatórios e notificações pertencem a uma conta.
+- Cada usuário pertence a uma **conta** (ambiente). Perfis, números coletados, posts, metas, tarefas, comentários, histórico, relatórios e notificações pertencem a uma conta. Quem está na mesma conta é a mesma equipe e vê os mesmos dados.
 - O isolamento é feito no banco, por Row Level Security: toda consulta só enxerga a conta de quem está logado, seja pela tela, pela API ou por uma URL montada à mão. O mesmo @ pode ser monitorado por contas diferentes, cada uma com o próprio histórico.
 - A **conta administradora principal** (`super_admin`) gerencia os usuários pela aba Usuários, sem acesso aos dados dos outros ambientes. Criar, bloquear, redefinir senha e excluir passam pela Edge Function `admin-usuarios`, que confere quem chama e usa a chave de serviço só no servidor.
 - Senhas ficam no Supabase Auth (hash bcrypt). O admin gera uma senha provisória; no primeiro acesso, o Hub obriga a pessoa a criar a própria senha.
@@ -38,16 +39,17 @@ Painel open source para acompanhar, comparar e planejar o conteúdo de vários p
 |---|---|
 | Todo dia, 06:00 | `coletar-perfis`: seguidores, posts e métricas (curtidas, comentários, views de Reels) de cada perfil ativo, de todas as contas |
 | Todo dia, 06:20 | `hub.gerar_alertas()` |
-| Segunda, 08:00 | `hub.gerar_relatorio_semanal()` para a semana anterior, um relatório por conta |
+| A cada 15 min | `hub.arquivar_tarefas_publicadas()` e `hub.gerar_alertas_tarefas()` (atraso avisa o responsável, ou os admins quando não há responsável; nunca duplica) |
+| Sexta, 06:00 (no fuso do ambiente) | `hub.gerar_relatorios_semanais()`: um relatório por conta, cobrindo desde o fechamento do anterior, e aviso no sino |
 
 ## Papéis
 
 | Papel | Pode |
 |---|---|
-| `admin` | Tudo dentro do próprio ambiente (usuários novos entram como admin do ambiente deles) |
-| `estrategista` | Cadastrar e excluir perfis, metas; gerar relatórios; criar conteúdo |
-| `criador` | Criar e editar ideias e briefings |
-| `leitura` | Só ver |
+| `admin` | Tudo dentro do próprio ambiente, inclusive cadastrar e gerenciar a equipe |
+| `estrategista` | Perfis, metas, relatórios e tarefas, inclusive excluir tarefas de vez |
+| `criador` | Criar, mover, editar e arquivar tarefas; gerar relatório de período |
+| `leitura` | Ver e comentar |
 
 As regras ficam no banco (Row Level Security), não só na tela.
 

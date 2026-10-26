@@ -34,7 +34,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     : [{ data: [] as Notificacao[] }, { count: 0 }];
 
   const sino = (variante: "claro" | "trilho") => <Notificacoes itens={alertas ?? []} naoLidas={naoLidas ?? 0} variante={variante} />;
-  const menu = itensDoMenu(!!membro?.super_admin && liberado);
+  const menu = itensDoMenu(liberado && (!!membro?.super_admin || membro?.papel === "admin"));
 
   return (
     <div className="grid min-h-dvh grid-cols-[minmax(0,1fr)] md:grid-cols-[248px_minmax(0,1fr)] print:block">
@@ -48,7 +48,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         {liberado && (
           <nav aria-label="Menu principal" className="-mx-3 flex gap-1 overflow-x-auto px-3 pb-1 [scrollbar-width:none] md:mx-0 md:flex-col md:overflow-visible md:px-0 md:pb-0 [&::-webkit-scrollbar]:hidden">
             {menu.map((item) => (
-              <NavLink key={item.href} href={item.href}>
+              <NavLink key={item.href} href={item.href} emBreve={item.emBreve}>
                 <span className="whitespace-nowrap">{item.label}</span>
               </NavLink>
             ))}

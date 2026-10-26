@@ -1,47 +1,38 @@
 import type { Metadata } from "next";
-import { SeletorPerfil } from "@/components/seletor-perfil";
-import { escolherPerfil, listarIdeias, listarPerfisAtivos, listarPostsRecentes } from "@/lib/dados-planejador";
-import { membroAtual, podeEditarConteudo } from "@/lib/membro";
+import { contextoTarefas } from "@/lib/dados-tarefas";
+import { createClient } from "@/lib/supabase/server";
+import { CAMPOS_TAREFA, type Tarefa } from "@/lib/tarefas";
 import { Quadro } from "./quadro";
 
 export const metadata: Metadata = { title: "Planejador" };
+export const dynamic = "force-dynamic";
 
-export default async function PlanejadorPage({ searchParams }: { searchParams: Promise<{ perfil?: string; ideia?: string }> }) {
+export default async function PlanejadorPage({ searchParams }: { searchParams: Promise<{ tarefa?: string }> }) {
   const busca = await searchParams;
-  const { membro } = await membroAtual();
-  const perfis = await listarPerfisAtivos();
-  const perfil = escolherPerfil(perfis, busca.perfil);
+  const ctx = await contextoTarefas();
+  if (!ctx) return null;
 
-  if (!perfil) {
-    return (
-      <div className="max-w-xl rounded-balao border border-dashed border-line px-6 py-10 text-center">
-        <p className="font-medium">Cadastre um perfil para começar a planejar.</p>
-        <p className="mt-1 text-sm text-muted">O planejador organiza as ideias de conteúdo de cada perfil.</p>
-      </div>
-    );
-  }
-
-  const [ideias, posts] = await Promise.all([listarIdeias(perfil.id), listarPostsRecentes(perfil.id)]);
-  const pilares = [...new Set(ideias.map((i) => i.pilar).filter((p): p is string => !!p))].sort();
+  const supabase = await createClient();
+  const { data: tarefas } = await supabase
+    .from("tarefas")
+    .select(CAMPOS_TAREFA)
+    .is("arquivada_em", null)
+    .order("ordem")
+    .returns<Tarefa[]>();
+  const ids = (tarefas ?? []).map((t) => t.id);
+  const { data: comentarios } = ids.length
+    ? await supabase.from("tarefa_comentarios").select("id, tarefa_id").in("tarefa_id", ids).returns<{ id: number; tarefa_id: number }[]>()
+    : { data: [] };
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-5">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="font-display text-[2rem] leading-tight font-bold tracking-tight">Planejador</h1>
-          <p className="mt-1 text-muted">Arraste os cards entre as colunas ou use as setas. Clique em um card para editar.</p>
+          <p className="mt-1 text-muted">A produção de conteúdo do ambiente, do roteiro à publicação. Arraste os cartões entre as etapas.</p>
         </div>
-        <SeletorPerfil perfis={perfis} atual={perfil.handle} base="/planejador" />
       </header>
-      <Quadro
-        key={perfil.id}
-        perfil={perfil}
-        ideiasIniciais={ideias}
-        posts={posts}
-        pilares={pilares}
-        podeEditar={podeEditarConteudo(membro?.papel)}
-        abrirIdeia={Number(busca.ideia) || null}
-      />
+      <Quadro ctx={ctx} iniciais={tarefas ?? []} comentarios={comentarios ?? []} abrir={Number(busca.tarefa) || null} />
     </div>
   );
 }

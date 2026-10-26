@@ -20,6 +20,7 @@ const TIPO: Record<string, string> = {
   meta_em_risco: "Meta fora do ritmo",
   coleta_erro: "Falha na coleta",
   relatorio_semanal: "Relatório semanal",
+  tarefa_atrasada: "Tarefa atrasada",
 };
 const PONTO: Record<Notificacao["severidade"], string> = { critico: "bg-danger", atencao: "bg-warn", info: "bg-accent" };
 const quando = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" });

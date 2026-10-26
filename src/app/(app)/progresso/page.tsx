@@ -1,272 +1,167 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CapaPost } from "@/components/capa-post";
-import { Estrela } from "@/components/marca";
-import { METRICAS_META, isMetricaMeta } from "@/lib/comparativo";
-import { hojeSP } from "@/lib/dados-comparativo";
-import { membroAtual, podeEditarCadastro } from "@/lib/membro";
-import { formatarNumero, formatarPct, formatarVariacao } from "@/lib/metricas";
-import { urlMidia } from "@/lib/midia";
-import { destaques, diferenca, isDataIso, lerRelatorio, linhasPerfis, progressoMeta, rotuloSemana, segundaDaSemana, totais } from "@/lib/relatorio";
+import { contextoTarefas } from "@/lib/dados-tarefas";
 import { createClient } from "@/lib/supabase/server";
-import { GerarRelatorio, Imprimir } from "./botoes";
+import { CAMPOS_TAREFA, type Tarefa } from "@/lib/tarefas";
+import { GerarPeriodo, Imprimir } from "./botoes";
+import { PainelAoVivo } from "./painel";
+import { RelatorioAntigo } from "./relatorio-antigo";
+import { RelatorioV2 } from "./relatorio-v2";
 
 export const metadata: Metadata = { title: "Progresso" };
+export const dynamic = "force-dynamic";
 
-type Relatorio = { id: number; semana_inicio: string; semana_fim: string; parcial: boolean; dados: unknown; gerado_em: string };
-
-const quando = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short", timeZone: "America/Sao_Paulo" });
-const share = (v: number | null) => (v === null ? "—" : `${(v * 100).toFixed(0)}%`);
-const dataBr = (d: string) => d.split("-").reverse().join("/");
-
-const ROTULO_ALERTA: Record<string, string> = {
-  queda_seguidores: "Quedas de seguidores",
-  post_destaque: "Posts em destaque",
-  meta_em_risco: "Metas fora do ritmo",
-  coleta_erro: "Falhas de coleta",
+type Item = {
+  id: number;
+  tipo: "semanal" | "personalizado";
+  semana_inicio: string;
+  periodo_inicio: string;
+  periodo_fim: string;
+  parcial: boolean;
+  gerado_em: string;
+  formato: number | null;
 };
 
-function Kpi({ rotulo, valor, delta }: { rotulo: string; valor: string; delta?: number | null }) {
-  return (
-    <div className="rounded-balao border border-line bg-surface p-4 shadow-card">
-      <div className="text-xs font-semibold uppercase tracking-wide text-muted">{rotulo}</div>
-      <div className="mt-1 font-display text-2xl font-bold tabular-nums">{valor}</div>
-      {delta !== undefined && (
-        <div className={`mt-0.5 text-xs tabular-nums ${delta === null ? "text-muted" : delta > 0 ? "text-ok" : delta < 0 ? "text-danger" : "text-muted"}`}>
-          {delta === null ? "sem semana anterior" : `${formatarVariacao(delta)} vs. semana anterior`}
-        </div>
-      )}
-    </div>
-  );
-}
+const DIA = 86_400_000;
 
-export default async function ProgressoPage({ searchParams }: { searchParams: Promise<{ semana?: string }> }) {
+export default async function ProgressoPage({ searchParams }: { searchParams: Promise<{ relatorio?: string; comparar?: string }> }) {
   const busca = await searchParams;
-  const { membro } = await membroAtual();
-  const pode = podeEditarCadastro(membro?.papel);
-  const hoje = hojeSP();
-  const semanaAtual = segundaDaSemana(hoje);
-
+  const ctx = await contextoTarefas();
+  if (!ctx) return null;
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("relatorios")
-    .select("id, semana_inicio, semana_fim, parcial, dados, gerado_em")
-    .order("semana_inicio", { ascending: false })
-    .limit(26)
-    .returns<Relatorio[]>();
-  const lista = data ?? [];
-  const escolhida = isDataIso(busca.semana) ? busca.semana : null;
-  const rel = lista.find((r) => r.semana_inicio === escolhida) ?? lista[0] ?? null;
-  const anterior = rel ? lista.find((r) => r.semana_inicio < rel.semana_inicio) ?? null : null;
 
-  const cabecalho = (
-    <header className="flex flex-wrap items-end justify-between gap-4 print:hidden">
-      <div>
-        <h1 className="font-display text-[2rem] leading-tight font-bold tracking-tight">Progresso</h1>
-        <p className="mt-1 text-muted">Relatório semanal dos perfis, gerado toda segunda às 8h com os números da semana anterior.</p>
-      </div>
-      <div className="flex flex-wrap items-center gap-3">
-        {pode && <GerarRelatorio inicio={semanaAtual} rotulo={lista.some((r) => r.semana_inicio === semanaAtual) ? "Atualizar semana atual" : "Gerar prévia da semana atual"} />}
-        {rel && <Imprimir />}
-      </div>
-    </header>
+  const [{ data: tarefas }, { data: itens }] = await Promise.all([
+    supabase.from("tarefas").select(CAMPOS_TAREFA).is("arquivada_em", null).returns<Tarefa[]>(),
+    supabase
+      .from("relatorios")
+      .select("id, tipo, semana_inicio, periodo_inicio, periodo_fim, parcial, gerado_em, formato:dados->formato")
+      .order("periodo_fim", { ascending: false })
+      .order("id", { ascending: false })
+      .limit(80)
+      .returns<Item[]>(),
+  ]);
+  const lista = itens ?? [];
+  const semanais = lista.filter((r) => r.tipo === "semanal");
+  const personalizados = lista.filter((r) => r.tipo === "personalizado");
+  const escolhido = lista.find((r) => r.id === Number(busca.relatorio)) ?? semanais[0] ?? lista[0] ?? null;
+
+  // Comparação padrão: o relatório anterior do mesmo tipo e formato.
+  const candidatos = escolhido ? lista.filter((r) => r.id !== escolhido.id && r.formato === escolhido.formato) : [];
+  const padrao = escolhido
+    ? candidatos.find((r) => r.tipo === escolhido.tipo && r.periodo_fim <= escolhido.periodo_inicio) ?? null
+    : null;
+  const comparado = candidatos.find((r) => r.id === Number(busca.comparar)) ?? padrao;
+
+  const ids = [escolhido?.id, comparado?.id].filter((x): x is number => !!x);
+  const { data: completos } = ids.length
+    ? await supabase.from("relatorios").select("id, dados").in("id", ids).returns<{ id: number; dados: unknown }[]>()
+    : { data: [] as { id: number; dados: unknown }[] };
+  const dadosDe = (id?: number) => completos?.find((c) => c.id === id)?.dados ?? null;
+
+  const dia = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", timeZone: ctx.fuso });
+  const quando = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short", timeZone: ctx.fuso });
+  const rotulo = (r: Item) =>
+    r.formato === 2
+      ? `${dia.format(new Date(r.periodo_inicio))} a ${dia.format(new Date(new Date(r.periodo_fim).getTime() - 1000))}`
+      : `${dia.format(new Date(`${r.semana_inicio}T12:00:00Z`))} a ${dia.format(new Date(new Date(r.periodo_fim).getTime() - DIA / 2))}`;
+  const dias = escolhido ? Math.max(1, Math.round((Date.parse(escolhido.periodo_fim) - Date.parse(escolhido.periodo_inicio)) / DIA)) : 7;
+
+  const Chip = ({ r }: { r: Item }) => (
+    <Link
+      href={`/progresso?relatorio=${r.id}`}
+      aria-current={r.id === escolhido?.id ? "page" : undefined}
+      className={`rounded-full border px-3 py-1 text-sm tabular-nums ${r.id === escolhido?.id ? "border-accent bg-accent-soft text-accent-strong" : "border-line bg-surface hover:border-accent"}`}
+    >
+      {rotulo(r)}
+      {r.formato !== 2 && <span className="text-muted"> (antigo)</span>}
+    </Link>
   );
 
-  if (!rel) {
-    return (
-      <div className="grid max-w-6xl gap-6">
-        {cabecalho}
-        <div className="rounded-balao border border-dashed border-line px-6 py-10 text-center">
-          <p className="font-medium">Nenhum relatório ainda.</p>
-          <p className="mt-1 text-sm text-muted">O primeiro sai na segunda às 8h. {pode ? "Você também pode gerar uma prévia da semana atual agora." : ""}</p>
-        </div>
-      </div>
-    );
-  }
-
-  const d = lerRelatorio(rel.dados);
-  const linhas = linhasPerfis(d.perfis);
-  const t = totais(linhas);
-  const tAnt = anterior ? totais(linhasPerfis(lerRelatorio(anterior.dados).perfis)) : null;
-  const frases = destaques(linhas, d.top_posts);
-  const incompletos = linhas.filter((l) => l.coberturaIncompleta);
-  const alertas = Object.entries(d.alertas).filter(([, n]) => n > 0);
-
   return (
-    <div className="grid max-w-6xl gap-6">
-      {cabecalho}
-
-      <nav aria-label="Semanas" className="flex flex-wrap gap-1.5 print:hidden">
-        {lista.map((r) => (
-          <Link
-            key={r.id}
-            href={`/progresso?semana=${r.semana_inicio}`}
-            aria-current={r.id === rel.id ? "page" : undefined}
-            className={`rounded-full border px-3 py-1 text-sm tabular-nums ${r.id === rel.id ? "border-accent bg-accent-soft text-accent-strong" : "border-line hover:border-accent"}`}
-          >
-            {rotuloSemana(r.semana_inicio, r.semana_fim)}
-            {r.parcial && " (prévia)"}
-          </Link>
-        ))}
-      </nav>
-
-      <section className="grid gap-1">
-        <h2 className="font-display text-2xl font-bold">
-          Semana de {rotuloSemana(rel.semana_inicio, rel.semana_fim)}
-          {rel.parcial && <span className="ml-2 align-middle rounded-full bg-warn-soft px-2 py-0.5 text-xs font-semibold text-warn">Prévia: semana em andamento</span>}
-        </h2>
-        <p className="text-xs text-muted">Gerado em {quando.format(new Date(rel.gerado_em))}</p>
-        {pode && rel.parcial && rel.semana_inicio !== semanaAtual && (
-          <div className="mt-2"><GerarRelatorio inicio={rel.semana_inicio} rotulo="Refazer com a semana fechada" /></div>
-        )}
-      </section>
-
-      {frases.length > 0 && (
-        // Os destaques da semana como uma fala da Prefiro: balão laranja-claro com a estrela.
-        <div className="flex items-start gap-3 rounded-balao bg-accent-wash p-4 text-sm">
-          <Estrela className="mt-0.5 size-5 shrink-0 text-accent" />
-          <ul className="grid gap-1">
-            {frases.map((f) => <li key={f}>{f}</li>)}
-          </ul>
+    <div className="grid max-w-6xl gap-8">
+      <header className="flex flex-wrap items-end justify-between gap-4 print:hidden">
+        <div>
+          <h1 className="font-display text-[2rem] leading-tight font-bold tracking-tight">Progresso</h1>
+          <p className="mt-1 text-muted">A produção da equipe ao vivo e os relatórios: o semanal sai toda sexta às 6h, e você pode gerar um de qualquer período.</p>
         </div>
-      )}
+      </header>
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Kpi rotulo="Seguidores (soma)" valor={formatarNumero(t.seguidores, { compacto: false })} />
-        <Kpi rotulo="Ganho na semana" valor={formatarVariacao(t.ganho)} delta={tAnt ? diferenca(t.ganho, tAnt.ganho) : null} />
-        <Kpi rotulo="Posts" valor={formatarNumero(t.posts)} delta={tAnt ? diferenca(t.posts, tAnt.posts) : null} />
-        <Kpi rotulo="Interações" valor={formatarNumero(t.interacoes)} delta={tAnt ? diferenca(t.interacoes, tAnt.interacoes) : null} />
+      <div className="print:hidden">
+        <PainelAoVivo contaId={ctx.contaId} hoje={ctx.hoje} membros={ctx.membros} iniciais={tarefas ?? []} />
       </div>
 
-      <section className="grid gap-3">
-        <h3 className="font-display text-lg font-bold">Perfis</h3>
-        <div className="overflow-x-auto rounded-balao border border-line bg-surface shadow-card">
-          <table className="w-full min-w-[720px] text-sm">
-            <thead className="border-b border-line text-xs uppercase tracking-wide text-muted">
-              <tr>
-                <th className="px-4 py-3 text-left font-semibold">Perfil</th>
-                <th className="px-4 py-3 text-right font-semibold">Seguidores</th>
-                <th className="px-4 py-3 text-right font-semibold">Ganho</th>
-                <th className="px-4 py-3 text-right font-semibold">Cresc.</th>
-                <th className="px-4 py-3 text-right font-semibold" title="Fatia de cada perfil no total de seguidores ganhos">Fatia do ganho</th>
-                <th className="px-4 py-3 text-right font-semibold">Posts</th>
-                <th className="px-4 py-3 text-right font-semibold">Interações</th>
-                <th className="px-4 py-3 text-right font-semibold">Média/post</th>
-              </tr>
-            </thead>
-            <tbody>
-              {linhas.map((l) => (
-                <tr key={l.id} className="border-b border-line last:border-0">
-                  <td className="px-4 py-3">
-                    <Link href={`/perfis/${l.handle}`} className="font-medium text-accent-strong hover:underline">@{l.handle}</Link>
-                    {l.coberturaIncompleta && <span className="ml-1 text-xs text-muted" title={`${l.dias_coletados} de 7 dias com leitura`}>*</span>}
-                  </td>
-                  <td className="px-4 py-3 text-right tabular-nums">{formatarNumero(l.seguidores_fim, { compacto: false })}</td>
-                  <td className={`px-4 py-3 text-right tabular-nums ${l.ganho === null ? "" : l.ganho > 0 ? "text-ok" : l.ganho < 0 ? "text-danger" : ""}`}>{formatarVariacao(l.ganho)}</td>
-                  <td className="px-4 py-3 text-right tabular-nums">{formatarPct(l.crescimentoPct, 2)}</td>
-                  <td className="px-4 py-3 text-right tabular-nums">{share(l.shareCrescimento)}</td>
-                  <td className="px-4 py-3 text-right tabular-nums">{l.posts}</td>
-                  <td className="px-4 py-3 text-right tabular-nums">{formatarNumero(l.interacoes)}</td>
-                  <td className="px-4 py-3 text-right tabular-nums">{formatarNumero(l.mediaInteracoes)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <section aria-labelledby="relatorios" className="grid gap-5">
+        <div className="flex flex-wrap items-end justify-between gap-4 print:hidden">
+          <div>
+            <h2 id="relatorios" className="font-display text-xl font-bold">Relatórios</h2>
+            <p className="text-sm text-muted">Os semanais cobrem de uma sexta às 6h até a seguinte, sem repetir dias. Os de período ficam guardados à parte.</p>
+          </div>
+          {ctx.podeEditar && <GerarPeriodo hoje={ctx.hoje} />}
         </div>
-        {incompletos.length > 0 && (
-          <p className="text-xs text-muted">* Menos de 7 dias de coleta nesta semana. O ganho cobre só os dias com leitura.</p>
+
+        <div className="grid gap-3 print:hidden">
+          {semanais.length > 0 && (
+            <nav aria-label="Relatórios semanais" className="flex flex-wrap items-center gap-1.5">
+              <span className="mr-1 text-sm font-medium">Semanais</span>
+              {semanais.map((r) => (
+                <Chip key={r.id} r={r} />
+              ))}
+            </nav>
+          )}
+          {personalizados.length > 0 && (
+            <nav aria-label="Relatórios por período" className="flex flex-wrap items-center gap-1.5">
+              <span className="mr-1 text-sm font-medium">Por período</span>
+              {personalizados.map((r) => (
+                <Chip key={r.id} r={r} />
+              ))}
+            </nav>
+          )}
+        </div>
+
+        {!escolhido ? (
+          <div className="rounded-balao border border-dashed border-line px-6 py-10 text-center">
+            <p className="font-medium">Nenhum relatório ainda.</p>
+            <p className="mt-1 text-sm text-muted">O primeiro semanal sai na próxima sexta às 6h. Você também pode gerar um relatório de um período agora.</p>
+          </div>
+        ) : (
+          <article className="grid gap-6">
+            <header className="flex flex-wrap items-start justify-between gap-3">
+              <div className="grid gap-1">
+                <h3 className="font-display text-2xl font-bold">
+                  {escolhido.tipo === "semanal" ? "Semana" : "Período"} de {rotulo(escolhido)}
+                </h3>
+                <p className="text-xs text-muted">
+                  Gerado em {quando.format(new Date(escolhido.gerado_em))}
+                  {comparado ? ` · comparado com ${rotulo(comparado)}` : " · sem relatório anterior para comparar"}
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 print:hidden">
+                {candidatos.length > 0 && (
+                  <form className="flex items-center gap-2 text-sm" action="/progresso">
+                    <input type="hidden" name="relatorio" value={escolhido.id} />
+                    <label htmlFor="comparar" className="text-muted">Comparar com</label>
+                    <select id="comparar" name="comparar" defaultValue={comparado?.id ?? ""} className="h-9 rounded-md border border-line bg-surface px-2.5">
+                      {candidatos.map((r) => (
+                        <option key={r.id} value={r.id}>
+                          {r.tipo === "semanal" ? "Semana" : "Período"} {rotulo(r)}
+                        </option>
+                      ))}
+                    </select>
+                    <button type="submit" className="h-9 rounded-md border border-line px-3 hover:border-accent">Ver</button>
+                  </form>
+                )}
+                <Imprimir />
+              </div>
+            </header>
+
+            {escolhido.formato === 2 ? (
+              <RelatorioV2 dados={dadosDe(escolhido.id)} anterior={dadosDe(comparado?.id)} dias={dias} />
+            ) : (
+              <RelatorioAntigo rel={{ dados: dadosDe(escolhido.id) }} anterior={comparado ? { dados: dadosDe(comparado.id) } : null} />
+            )}
+          </article>
         )}
       </section>
-
-      {d.top_posts.length > 0 && (
-        <section className="grid gap-3">
-          <h3 className="font-display text-lg font-bold">Posts com mais interações</h3>
-          <ol className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {d.top_posts.map((p, i) => {
-              const thumb = urlMidia(p.thumb_path);
-              return (
-                <li key={p.id} className="flex gap-3 rounded-balao border border-line bg-surface p-3 shadow-card">
-                  <div className="relative size-20 shrink-0 overflow-hidden rounded-balao-sm bg-bg">
-                    <CapaPost src={thumb} formato={p.produto === "REELS" ? "Reel" : p.tipo === "CAROUSEL_ALBUM" ? "Carrossel" : "Foto"} className="size-full" />
-                    {i === 0 ? (
-                      <span className="absolute left-1 top-1 grid size-6 place-items-center rounded-balao-sm bg-accent text-accent-ink" title="Melhor post da semana">
-                        <Estrela className="size-3.5" titulo="1º lugar" />
-                      </span>
-                    ) : (
-                      <span className="absolute left-1 top-1 rounded-md bg-surface/90 px-1.5 text-[11px] font-bold tabular-nums">{i + 1}º</span>
-                    )}
-                  </div>
-                  <div className="min-w-0 text-sm">
-                    <div className="font-semibold">@{p.handle}</div>
-                    <div className="tabular-nums text-muted">
-                      {formatarNumero(p.interacoes)} interações · {formatarNumero(p.likes)} curtidas · {formatarNumero(p.comentarios)} coment.
-                    </div>
-                    <p className="mt-1 line-clamp-2">{p.legenda ?? "Sem legenda"}</p>
-                    {p.permalink && (
-                      <a href={p.permalink} target="_blank" rel="noopener noreferrer" className="text-xs text-accent-strong hover:underline print:hidden">Abrir no Instagram</a>
-                    )}
-                  </div>
-                </li>
-              );
-            })}
-          </ol>
-        </section>
-      )}
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        <section className="grid content-start gap-3">
-          <h3 className="font-display text-lg font-bold">Metas</h3>
-          {d.metas.length === 0 ? (
-            <p className="text-sm text-muted">Nenhuma meta ativa. <Link href="/metas" className="text-accent-strong hover:underline print:hidden">Criar meta</Link></p>
-          ) : (
-            <ul className="grid gap-2">
-              {d.metas.map((m) => {
-                const pct = progressoMeta(m);
-                const rotulo = isMetricaMeta(m.metrica) ? METRICAS_META[m.metrica].rotulo : m.metrica;
-                return (
-                  <li key={m.id} className="rounded-balao border border-line bg-surface p-3 text-sm shadow-card">
-                    <div className="flex justify-between gap-2">
-                      <span><span className="font-semibold">@{m.handle}</span> · {rotulo}: {formatarNumero(m.alvo, { compacto: false })} até {dataBr(m.prazo)}</span>
-                      <span className="tabular-nums text-muted">{pct === null ? "—" : `${Math.round(pct)}%`}</span>
-                    </div>
-                    <div className="mt-2 h-2 overflow-hidden rounded-full bg-bg" role="progressbar" aria-valuenow={Math.round(pct ?? 0)} aria-valuemin={0} aria-valuemax={100}>
-                      <div className={`h-full rounded-full ${pct === 100 ? "bg-ok" : "bg-accent"}`} style={{ width: `${pct ?? 0}%` }} />
-                    </div>
-                    {m.atual === null && <p className="mt-1 text-xs text-muted">Engajamento é acompanhado na tela de Metas.</p>}
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </section>
-
-        <section className="grid content-start gap-3">
-          <h3 className="font-display text-lg font-bold">Ideias do planejador publicadas</h3>
-          {d.ideias_publicadas.length === 0 ? (
-            <p className="text-sm text-muted">Nenhum post desta semana foi ligado a uma ideia. Ligue o post na ideia, no planejador, para medir o resultado.</p>
-          ) : (
-            <ul className="grid gap-2 text-sm">
-              {d.ideias_publicadas.map((i) => (
-                <li key={i.id} className="flex justify-between gap-2 rounded-balao border border-line bg-surface p-3 shadow-card">
-                  <span><span className="font-semibold">@{i.handle}</span> · {i.titulo}</span>
-                  <span className="shrink-0 tabular-nums text-muted">{formatarNumero(i.interacoes)} interações</span>
-                </li>
-              ))}
-            </ul>
-          )}
-
-          <h3 className="mt-3 font-display text-lg font-bold">Alertas da semana</h3>
-          {alertas.length === 0 ? (
-            <p className="text-sm text-muted">Nenhum alerta.</p>
-          ) : (
-            <ul className="grid gap-1 text-sm">
-              {alertas.map(([tipo, n]) => (
-                <li key={tipo} className="flex justify-between"><span>{ROTULO_ALERTA[tipo] ?? tipo}</span><span className="tabular-nums">{n}</span></li>
-              ))}
-            </ul>
-          )}
-        </section>
-      </div>
     </div>
   );
 }

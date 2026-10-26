@@ -70,7 +70,7 @@ describe("destaques", () => {
     const f = destaques(l, [{ id: "p", handle: "a", produto: null, tipo: null, legenda: null, permalink: null, thumb_path: null, publicado_em: null, likes: 10, comentarios: 2, interacoes: 1234 }]);
     expect(f).toEqual([
       "@a foi quem mais ganhou seguidores: +200.",
-      "@b perdeu seguidores na semana.",
+      "@b perdeu seguidores no período.",
       "@b não publicou nada.",
       "Melhor post: @a, com 1.234 interações.",
     ]);

@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Dialogo } from "@/components/dialogo";
-import { problemaSenha, type UsuarioLista } from "@/lib/usuarios";
+import { PAPEIS, PAPEL_DESCRICAO, PAPEL_ROTULO, problemaSenha, type Papel, type UsuarioLista } from "@/lib/usuarios";
 import { chamarGestao, type RespostaUsuarios } from "./actions";
 
 const campo = "h-10 rounded-md border border-line bg-bg px-3 font-normal text-ink";
@@ -16,6 +16,7 @@ type Modal =
   | { tipo: "editar"; u: UsuarioLista }
   | { tipo: "bloquear"; u: UsuarioLista }
   | { tipo: "redefinir"; u: UsuarioLista }
+  | { tipo: "papel"; u: UsuarioLista }
   | { tipo: "excluir"; u: UsuarioLista };
 
 function Situacao({ u }: { u: UsuarioLista }) {
@@ -37,7 +38,19 @@ function Copiar({ texto }: { texto: string }) {
   );
 }
 
-export function GestaoUsuarios({ usuarios, eu }: { usuarios: UsuarioLista[]; eu: string }) {
+export function GestaoUsuarios({
+  usuarios,
+  eu,
+  superAdmin,
+  minhaConta,
+}: {
+  usuarios: UsuarioLista[];
+  eu: string;
+  superAdmin: boolean;
+  minhaConta: number;
+}) {
+  const [destino, setDestino] = useState<"equipe" | "novo_ambiente">("equipe");
+  const [papelNovo, setPapelNovo] = useState<Papel>("criador");
   const router = useRouter();
   const [modal, setModal] = useState<Modal | null>(null);
   const [aviso, setAviso] = useState<{ ok?: string; erro?: string } | null>(null);
@@ -67,21 +80,27 @@ export function GestaoUsuarios({ usuarios, eu }: { usuarios: UsuarioLista[]; eu:
     }
     setErroForm(null);
     const nome = String(fd.get("nome") ?? "");
-    executar({ acao: "criar", nome, email: fd.get("email"), senha: senha || undefined }, (r) => {
+    executar({ acao: "criar", nome, email: fd.get("email"), senha: senha || undefined, destino, papel: papelNovo }, (r) => {
       form.reset();
       setDefinirSenha(false);
       if (r.senha_provisoria && !senha) setModal({ tipo: "senha", nome, email: r.email ?? "", senha: r.senha_provisoria });
     });
   }
 
-  const outros = usuarios.filter((u) => !u.super_admin).length;
+  const outros = usuarios.filter((u) => u.user_id !== eu).length;
+  const sozinho = (u: UsuarioLista) => usuarios.filter((x) => x.conta_id === u.conta_id).length === 1;
 
   return (
     <>
       <section className="grid gap-4 rounded-balao border border-line bg-surface p-5 shadow-card">
         <div>
           <h2 className="font-display text-lg font-bold">Novo usuário</h2>
-          <p className="text-sm text-muted">A pessoa recebe um ambiente vazio e só dela. No primeiro acesso, ela cria a própria senha.</p>
+          <p className="text-sm text-muted">
+            {destino === "equipe"
+              ? "A pessoa entra no seu ambiente e vê os mesmos perfis, tarefas e relatórios, com o papel que você escolher."
+              : "A pessoa recebe um ambiente vazio e só dela, como admin."}{" "}
+            No primeiro acesso, ela cria a própria senha.
+          </p>
         </div>
         <form onSubmit={cadastrar} className="grid gap-4">
           <div className="grid gap-3 lg:grid-cols-2">
@@ -94,6 +113,29 @@ export function GestaoUsuarios({ usuarios, eu }: { usuarios: UsuarioLista[]; eu:
               <input name="email" type="email" required className={campo} placeholder="nome@empresa.com.br" autoComplete="off" />
             </label>
           </div>
+          {superAdmin && (
+            <fieldset className="grid gap-2 text-sm">
+              <legend className="mb-1 font-medium">Onde a pessoa entra</legend>
+              <label className="flex items-center gap-2">
+                <input type="radio" name="destino" checked={destino === "equipe"} onChange={() => { setDestino("equipe"); setPapelNovo("criador"); }} />
+                Na minha equipe (mesmo ambiente, mesmos dados)
+              </label>
+              <label className="flex items-center gap-2">
+                <input type="radio" name="destino" checked={destino === "novo_ambiente"} onChange={() => { setDestino("novo_ambiente"); setPapelNovo("admin"); }} />
+                Em um ambiente novo e isolado (outra empresa)
+              </label>
+            </fieldset>
+          )}
+          {destino === "equipe" && (
+            <label className="grid max-w-md gap-1 text-sm font-medium">
+              Papel
+              <select value={papelNovo} onChange={(e) => setPapelNovo(e.target.value as Papel)} className={campo}>
+                {PAPEIS.map((p) => (
+                  <option key={p} value={p}>{PAPEL_ROTULO[p]}: {PAPEL_DESCRICAO[p]}</option>
+                ))}
+              </select>
+            </label>
+          )}
           <fieldset className="grid gap-2 text-sm">
             <legend className="mb-1 font-medium">Senha de acesso</legend>
             <label className="flex items-center gap-2">
@@ -124,7 +166,7 @@ export function GestaoUsuarios({ usuarios, eu }: { usuarios: UsuarioLista[]; eu:
 
       <section className="grid gap-3">
         <h2 className="font-display text-lg font-bold">
-          Usuários cadastrados <span className="font-sans text-base font-normal text-muted">({outros} além da conta principal)</span>
+          Usuários cadastrados <span className="font-sans text-base font-normal text-muted">({outros} além de você)</span>
         </h2>
         <ul className="grid gap-2">
           {usuarios.map((u) => (
@@ -133,6 +175,8 @@ export function GestaoUsuarios({ usuarios, eu }: { usuarios: UsuarioLista[]; eu:
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-semibold">{u.nome}</span>
                   {u.super_admin && <span className="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent-strong">Conta principal</span>}
+                  <span className="rounded-full bg-lane px-2 py-0.5 text-xs font-semibold">{PAPEL_ROTULO[u.papel] ?? u.papel}</span>
+                  {superAdmin && u.conta_id !== minhaConta && u.conta && <span className="text-xs text-muted">Ambiente: {u.conta}</span>}
                   {u.user_id === eu && <span className="text-xs text-muted">(você)</span>}
                 </div>
                 <div className="truncate text-sm text-muted">{u.email ?? "sem e-mail"}</div>
@@ -145,8 +189,11 @@ export function GestaoUsuarios({ usuarios, eu }: { usuarios: UsuarioLista[]; eu:
                 <button type="button" onClick={() => setModal({ tipo: "editar", u })} className={`${btn} border border-line hover:border-accent`}>
                   Editar
                 </button>
-                {!u.super_admin && (
+                {!u.super_admin && u.user_id !== eu && (
                   <>
+                    <button type="button" onClick={() => setModal({ tipo: "papel", u })} className={`${btn} border border-line hover:border-accent`}>
+                      Papel
+                    </button>
                     {u.ativo ? (
                       <button type="button" onClick={() => setModal({ tipo: "bloquear", u })} className={`${btn} border border-line hover:border-accent`}>
                         Bloquear
@@ -244,18 +291,48 @@ export function GestaoUsuarios({ usuarios, eu }: { usuarios: UsuarioLista[]; eu:
         </Dialogo>
       )}
 
-      {modal?.tipo === "excluir" && <ConfirmarExclusao u={modal.u} pendente={pendente} aoFechar={() => setModal(null)}
+      {modal?.tipo === "papel" && (
+        <Dialogo titulo={`Papel de ${modal.u.nome}`} aoFechar={() => setModal(null)} largura="sm"
+          descricao="O papel define o que a pessoa pode fazer no ambiente. Muda na hora.">
+          <form
+            className="grid gap-4"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const papel = new FormData(e.currentTarget).get("papel");
+              executar({ acao: "papel", user_id: modal.u.user_id, papel }, () => setModal(null));
+            }}
+          >
+            <fieldset className="grid gap-2 text-sm">
+              <legend className="sr-only">Papel</legend>
+              {PAPEIS.map((p) => (
+                <label key={p} className="flex items-start gap-2">
+                  <input type="radio" name="papel" value={p} defaultChecked={modal.u.papel === p} className="mt-1" />
+                  <span><span className="font-medium">{PAPEL_ROTULO[p]}</span> <span className="text-muted">· {PAPEL_DESCRICAO[p]}</span></span>
+                </label>
+              ))}
+            </fieldset>
+            <div className="flex justify-end gap-2">
+              <button type="button" onClick={() => setModal(null)} className={`${btn} border border-line`}>Cancelar</button>
+              <button type="submit" disabled={pendente} className={`${btn} bg-accent font-semibold text-accent-ink disabled:opacity-60`}>{pendente ? "Salvando…" : "Salvar"}</button>
+            </div>
+          </form>
+        </Dialogo>
+      )}
+
+      {modal?.tipo === "excluir" && <ConfirmarExclusao u={modal.u} sozinho={sozinho(modal.u)} pendente={pendente} aoFechar={() => setModal(null)}
         aoConfirmar={() => executar({ acao: "excluir", user_id: modal.u.user_id }, () => setModal(null))} />}
     </>
   );
 }
 
-function ConfirmarExclusao({ u, pendente, aoFechar, aoConfirmar }: { u: UsuarioLista; pendente: boolean; aoFechar: () => void; aoConfirmar: () => void }) {
+function ConfirmarExclusao({ u, sozinho, pendente, aoFechar, aoConfirmar }: { u: UsuarioLista; sozinho: boolean; pendente: boolean; aoFechar: () => void; aoConfirmar: () => void }) {
   const [digitado, setDigitado] = useState("");
   const alvo = u.email ?? u.nome;
   return (
     <Dialogo titulo={`Excluir ${u.nome}?`} aoFechar={aoFechar} largura="sm"
-      descricao="Apaga o login e todo o ambiente da pessoa: perfis, histórico de números, metas, ideias, relatórios e alertas. Não dá para desfazer.">
+      descricao={sozinho
+        ? "Apaga o login e todo o ambiente da pessoa: perfis, histórico de números, metas, tarefas, relatórios e alertas. Não dá para desfazer."
+        : "Apaga o login da pessoa. Os dados do ambiente continuam; as tarefas dela ficam sem responsável e os comentários mantêm o nome. Não dá para desfazer."}>
       <label className="grid gap-1 text-sm font-medium">
         Para confirmar, digite {alvo}
         <input value={digitado} onChange={(e) => setDigitado(e.target.value)} className={campo} autoComplete="off" />
