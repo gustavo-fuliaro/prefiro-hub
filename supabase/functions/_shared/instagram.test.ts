@@ -115,3 +115,52 @@ describe("diaSaoPaulo", () => {
     expect(diaSaoPaulo(new Date("2026-10-23T03:30:00Z"))).toBe("2026-10-23");
   });
 });
+
+describe("linhaPost e capas", () => {
+  const post = { id: "99", tipo: "VIDEO", produto: "REELS", legenda: null, permalink: null, publicado_em: null, likes: 1, comentarios: 0, views: 10, imagem_url: null };
+
+  it("sempre manda a capa explícita, preservando a já salva", async () => {
+    const { linhaPost } = await import("./instagram");
+    expect(linhaPost(4, post, null, "a/posts/99.jpg")).toMatchObject({ id: "4_99", thumb_path: "a/posts/99.jpg" });
+    expect(linhaPost(4, post, "a/posts/99.jpg", null).thumb_path).toBe("a/posts/99.jpg");
+    const vazia = linhaPost(4, post, null, null);
+    expect("thumb_path" in vazia).toBe(true);
+    expect(vazia.thumb_path).toBeNull();
+  });
+
+  it("monta o caminho da capa pelo id da Meta", async () => {
+    const { caminhoCapa } = await import("./instagram");
+    expect(caminhoCapa("prefiro", "1789")).toBe("prefiro/posts/1789.jpg");
+  });
+
+  it("aceita imagens do CDN mesmo sem tipo declarado", async () => {
+    const { tipoImagem } = await import("./instagram");
+    expect(tipoImagem("image/jpeg; charset=x", "https://x/a.jpg")).toBe("image/jpeg");
+    expect(tipoImagem("application/octet-stream", "https://scontent.cdninstagram.com/v/t51.2885-15/abc.jpg?stp=1")).toBe("image/jpeg");
+    expect(tipoImagem("application/octet-stream", "https://x/foto.heic")).toBeNull();
+    expect(tipoImagem(null, "https://x/a.webp")).toBe("image/webp");
+    expect(tipoImagem("video/mp4", "https://x/a.mp4")).toBeNull();
+    expect(tipoImagem("text/html", "https://x/erro")).toBeNull();
+  });
+});
+
+describe("capas de posts antigos", () => {
+  it("pede só os campos de capa, com limite maior", async () => {
+    const { urlCapasAntigas } = await import("./instagram");
+    const f = new URL(urlCapasAntigas({ versao: "v23.0", igUserId: "1", handle: "abc", token: "T" })).searchParams.get("fields")!;
+    expect(f).toContain("media.limit(80)");
+    expect(f).toContain("thumbnail_url");
+    expect(f).not.toContain("like_count");
+  });
+
+  it("usa a capa do vídeo e a imagem do post, ignorando vídeo sem capa", async () => {
+    const { interpretarCapas } = await import("./instagram");
+    const m = interpretarCapas({ business_discovery: { media: { data: [
+      { id: "1", media_type: "VIDEO", thumbnail_url: "https://x/capa.jpg", media_url: "https://x/v.mp4" },
+      { id: "2", media_type: "IMAGE", media_url: "https://x/img.jpg" },
+      { id: "3", media_type: "VIDEO", media_url: "https://x/v2.mp4" },
+    ] } } });
+    expect([...m.entries()]).toEqual([["1", "https://x/capa.jpg"], ["2", "https://x/img.jpg"]]);
+    expect(interpretarCapas({}).size).toBe(0);
+  });
+});

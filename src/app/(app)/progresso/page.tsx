@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { CapaPost } from "@/components/capa-post";
 import { Estrela } from "@/components/marca";
 import { METRICAS_META, isMetricaMeta } from "@/lib/comparativo";
 import { hojeSP } from "@/lib/dados-comparativo";
@@ -186,12 +187,7 @@ export default async function ProgressoPage({ searchParams }: { searchParams: Pr
               return (
                 <li key={p.id} className="flex gap-3 rounded-balao border border-line bg-surface p-3 shadow-card">
                   <div className="relative size-20 shrink-0 overflow-hidden rounded-balao-sm bg-bg">
-                    {thumb ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={thumb} alt="" className="size-full object-cover" loading="lazy" />
-                    ) : (
-                      <span className="grid size-full place-items-center text-xs text-muted">{p.produto === "REELS" ? "Reel" : "Post"}</span>
-                    )}
+                    <CapaPost src={thumb} formato={p.produto === "REELS" ? "Reel" : p.tipo === "CAROUSEL_ALBUM" ? "Carrossel" : "Foto"} className="size-full" />
                     {i === 0 ? (
                       <span className="absolute left-1 top-1 grid size-6 place-items-center rounded-balao-sm bg-accent text-accent-ink" title="Melhor post da semana">
                         <Estrela className="size-3.5" titulo="1º lugar" />

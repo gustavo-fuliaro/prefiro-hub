@@ -118,3 +118,58 @@ export function diaSaoPaulo(agora: Date = new Date()): string {
     day: "2-digit",
   }).format(agora);
 }
+
+// Linha de um post para gravar no banco. A capa vai SEMPRE explícita: a nova (se baixou agora),
+// senão a que já estava salva. Gravar em lote com a coluna ausente em algumas linhas faz o
+// banco preencher com null e apagar capas já salvas.
+export function linhaPost(perfilId: number, p: PostColetado, capaNova: string | null, capaSalva: string | null) {
+  return {
+    id: idPostHub(perfilId, p.id),
+    media_id: p.id,
+    perfil_id: perfilId,
+    tipo: p.tipo,
+    produto: p.produto,
+    legenda: p.legenda,
+    permalink: p.permalink,
+    publicado_em: p.publicado_em,
+    thumb_path: capaNova ?? capaSalva,
+  };
+}
+
+// Caminho da capa no Storage (pelo id da Meta, igual para todas as contas que monitoram o perfil).
+export function caminhoCapa(handle: string, mediaId: string): string {
+  return `${handle}/posts/${mediaId}.jpg`;
+}
+
+// Tipo de imagem aceito pelo bucket. O CDN da Meta às vezes responde sem tipo ou como binário genérico.
+export function tipoImagem(contentType: string | null, url: string): "image/jpeg" | "image/png" | "image/webp" | null {
+  const t = (contentType ?? "").split(";")[0].trim().toLowerCase();
+  if (t === "image/jpeg" || t === "image/jpg") return "image/jpeg";
+  if (t === "image/png" || t === "image/webp") return t;
+  if (t === "" || t === "application/octet-stream" || t === "binary/octet-stream") {
+    const caminho = url.split("?")[0].toLowerCase();
+    if (/\.jpe?g$/.test(caminho)) return "image/jpeg";
+    if (caminho.endsWith(".webp")) return "image/webp";
+    if (caminho.endsWith(".png")) return "image/png";
+  }
+  return null;
+}
+
+// Pedido extra, só de capas, para posts mais antigos que saíram da janela da coleta diária sem capa salva.
+export function urlCapasAntigas(opts: { versao: string; igUserId: string; handle: string; token: string; limite?: number }): string {
+  const campos = `business_discovery.username(${opts.handle}){media.limit(${opts.limite ?? 80}){id,media_type,media_url,thumbnail_url}}`;
+  const qs = new URLSearchParams({ fields: campos, access_token: opts.token });
+  return `https://graph.facebook.com/${opts.versao}/${opts.igUserId}?${qs.toString()}`;
+}
+
+// Lê o pedido de capas: id da Meta → URL da imagem (capa do vídeo ou a própria imagem).
+export function interpretarCapas(json: unknown): Map<string, string> {
+  const bd = (json as { business_discovery?: { media?: { data?: Record<string, unknown>[] } } })?.business_discovery;
+  const capas = new Map<string, string>();
+  for (const m of bd?.media?.data ?? []) {
+    if (typeof m?.id !== "string") continue;
+    const url = str(m.thumbnail_url) ?? (m.media_type === "VIDEO" ? null : str(m.media_url));
+    if (url) capas.set(m.id, url);
+  }
+  return capas;
+}

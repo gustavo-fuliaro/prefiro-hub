@@ -4,19 +4,24 @@
 // Segredos ficam no Vault do Supabase: meta_access_token, meta_ig_user_id, hub_cron_secret.
 import { createClient, type SupabaseClient } from "jsr:@supabase/supabase-js@2";
 import {
+  caminhoCapa,
   diaSaoPaulo,
   erroDeCampo,
   idPostHub,
   interpretarBusinessDiscovery,
+  interpretarCapas,
+  linhaPost,
   mensagemErroMeta,
   type PerfilColetado,
+  tipoImagem,
   urlBusinessDiscovery,
+  urlCapasAntigas,
 } from "../_shared/instagram.ts";
 
 const VERSAO_GRAPH = Deno.env.get("META_GRAPH_VERSION") ?? "v23.0";
 const BUCKET = "hub-midia";
 const PAUSA_MS = 600; // entre perfis, para respeitar o limite da Meta
-const IMAGENS_POR_PERFIL = 12; // capas novas baixadas por execução
+const IMAGENS_POR_PERFIL = 30; // teto de capas novas por perfil e execução (a coleta lê 25 posts)
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -55,17 +60,45 @@ async function autorizar(req: Request, db: SupabaseClient): Promise<Acesso | nul
     : null;
 }
 
+// Copia a imagem do CDN da Meta para o Storage (as URLs da Meta expiram). Tenta duas vezes.
 async function copiarImagem(db: SupabaseClient, url: string, caminho: string): Promise<string | null> {
-  try {
-    const r = await fetch(url);
-    if (!r.ok) return null;
-    const tipo = r.headers.get("content-type")?.split(";")[0] ?? "image/jpeg";
-    if (!["image/jpeg", "image/png", "image/webp"].includes(tipo)) return null;
-    const { error } = await db.storage.from(BUCKET).upload(caminho, await r.arrayBuffer(), { contentType: tipo, upsert: true });
-    return error ? null : caminho;
-  } catch {
-    return null;
+  for (let tentativa = 1; tentativa <= 2; tentativa++) {
+    try {
+      const r = await fetch(url);
+      const tipo = tipoImagem(r.headers.get("content-type"), url);
+      if (!r.ok || !tipo) {
+        if (tentativa === 2) console.warn("capa recusada", r.status, r.headers.get("content-type"), caminho);
+        continue;
+      }
+      const { error } = await db.storage.from(BUCKET).upload(caminho, await r.arrayBuffer(), { contentType: tipo, upsert: true });
+      if (!error) return caminho;
+      console.warn("falha ao salvar capa", caminho, error.message);
+    } catch (e) {
+      if (tentativa === 2) console.warn("falha ao baixar capa", caminho, e instanceof Error ? e.message : e);
+    }
   }
+  return null;
+}
+
+// Posts antigos do perfil que ficaram sem capa (fora da janela de 25): busca as capas num pedido só de imagens.
+async function completarCapasAntigas(db: SupabaseClient, perfil: Perfil, acesso: { igUserId: string; token: string }) {
+  const hub = db.schema("hub");
+  const { data: semCapa } = await hub.from("posts").select("id, media_id").eq("perfil_id", perfil.id).is("thumb_path", null).limit(80);
+  if (!semCapa?.length) return 0;
+  const r = await fetch(urlCapasAntigas({ versao: VERSAO_GRAPH, igUserId: acesso.igUserId, handle: perfil.handle, token: acesso.token }));
+  if (!r.ok) return 0;
+  const capas = interpretarCapas(await r.json().catch(() => ({})));
+  let salvas = 0;
+  for (const p of semCapa as { id: string; media_id: string }[]) {
+    const url = capas.get(p.media_id);
+    if (!url) continue;
+    const caminho = await copiarImagem(db, url, caminhoCapa(perfil.handle, p.media_id));
+    if (caminho) {
+      await hub.from("posts").update({ thumb_path: caminho }).eq("id", p.id);
+      salvas++;
+    }
+  }
+  return salvas;
 }
 
 async function salvar(db: SupabaseClient, perfil: Perfil, c: PerfilColetado, dia: string) {
@@ -80,22 +113,18 @@ async function salvar(db: SupabaseClient, perfil: Perfil, c: PerfilColetado, dia
   if (c.posts.length) {
     const ids = c.posts.map((p) => idPostHub(perfil.id, p.id));
     const { data: existentes } = await hub.from("posts").select("id, thumb_path").in("id", ids);
-    const comCapa = new Set((existentes ?? []).filter((p) => p.thumb_path).map((p) => p.id));
+    const capaSalva = new Map((existentes ?? []).map((p) => [p.id as string, (p.thumb_path as string | null) ?? null]));
 
     let baixadas = 0;
     const linhas = [];
     for (const p of c.posts) {
-      let thumb: string | null = null;
-      const id = idPostHub(perfil.id, p.id);
-      if (!comCapa.has(id) && p.imagem_url && baixadas < IMAGENS_POR_PERFIL) {
-        thumb = await copiarImagem(db, p.imagem_url, `${perfil.handle}/posts/${p.id}.jpg`);
-        baixadas++;
+      const salva = capaSalva.get(idPostHub(perfil.id, p.id)) ?? null;
+      let nova: string | null = null;
+      if (!salva && p.imagem_url && baixadas < IMAGENS_POR_PERFIL) {
+        nova = await copiarImagem(db, p.imagem_url, caminhoCapa(perfil.handle, p.id));
+        if (nova) baixadas++;
       }
-      linhas.push({
-        id, media_id: p.id, perfil_id: perfil.id, tipo: p.tipo, produto: p.produto, legenda: p.legenda,
-        permalink: p.permalink, publicado_em: p.publicado_em,
-        ...(thumb ? { thumb_path: thumb } : {}),
-      });
+      linhas.push(linhaPost(perfil.id, p, nova, salva));
     }
     const { error: ePosts } = await hub.from("posts").upsert(linhas, { onConflict: "id" });
     if (ePosts) throw new Error(`Falha ao gravar posts: ${ePosts.message}`);
@@ -164,6 +193,8 @@ Deno.serve(async (req) => {
       }
       if (!r.ok) throw new Error(mensagemErroMeta(json, r.status));
       await salvar(db, perfil, interpretarBusinessDiscovery(json), dia);
+      // Falha ao completar capas antigas não derruba a coleta do perfil.
+      await completarCapasAntigas(db, perfil, { igUserId, token }).catch(() => 0);
       detalhes.push({ handle: perfil.handle, ok: true });
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);

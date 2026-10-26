@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Avatar } from "@/components/avatar";
+import { CapaPost } from "@/components/capa-post";
 import { CartaoIndicador } from "@/components/cartao-indicador";
 import { GraficoColunas } from "@/components/grafico-colunas";
 import { IconeAnterior } from "@/components/icones";
@@ -231,20 +232,17 @@ export default async function PerfilPage({ params, searchParams }: { params: Pro
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {listaPosts.slice(0, 24).map((p) => {
               const m = ultima.get(p.id);
-              const src = urlMidia(p.thumb_path);
+              const formato = p.produto === "REELS" ? "Reel" : TIPO[p.tipo ?? ""] ?? "Post";
               return (
                 <li key={p.id} className="overflow-hidden rounded-balao border border-line bg-surface shadow-card">
                   <a href={p.permalink ?? "#"} target="_blank" rel="noopener noreferrer" className="block">
-                    <div className="relative aspect-square bg-bg">
-                      {src && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={src} alt="" loading="lazy" className="h-full w-full object-cover" />
-                      )}
+                    <div className="relative">
+                      <CapaPost src={urlMidia(p.thumb_path)} formato={formato} className="aspect-square" />
                       <span className="absolute left-2 top-2 rounded bg-black/60 px-1.5 py-0.5 text-[11px] font-semibold uppercase text-white">
-                        {p.produto === "REELS" ? "Reel" : TIPO[p.tipo ?? ""] ?? "Post"}
+                        {formato}
                       </span>
                     </div>
-                    <div className="grid gap-0.5 px-3 py-2 text-xs tabular-nums text-muted">
+                    <div className="grid gap-0.5 px-3 py-2 text-xs tabular-nums text-muted [&_span]:whitespace-nowrap">
                       <div className="flex justify-between gap-2">
                         <span title="Curtidas">{formatarNumero(m?.likes ?? null)} curt.</span>
                         <span title="Comentários">{formatarNumero(m?.comentarios ?? null)} coment.</span>
