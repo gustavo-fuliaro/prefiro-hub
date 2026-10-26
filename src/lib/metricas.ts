@@ -5,10 +5,10 @@ export type Farol = "verde" | "amarelo" | "vermelho";
 export type Periodo = "30" | "60" | "90" | "tudo";
 
 export const PERIODOS: { valor: Periodo; rotulo: string }[] = [
+  { valor: "tudo", rotulo: "Desde o início" },
   { valor: "30", rotulo: "30 dias" },
   { valor: "60", rotulo: "60 dias" },
   { valor: "90", rotulo: "90 dias" },
-  { valor: "tudo", rotulo: "Desde o início" },
 ];
 
 export function lerPeriodo(v: unknown): Periodo {

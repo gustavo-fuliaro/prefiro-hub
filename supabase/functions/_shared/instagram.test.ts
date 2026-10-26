@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { diaSaoPaulo, interpretarBusinessDiscovery, mensagemErroMeta, urlBusinessDiscovery } from "./instagram";
+import { diaSaoPaulo, erroDeCampo, idPostHub, interpretarBusinessDiscovery, mensagemErroMeta, urlBusinessDiscovery } from "./instagram";
 
 const exemplo = {
   business_discovery: {
@@ -22,6 +22,7 @@ const exemplo = {
           timestamp: "2026-10-20T15:00:00+0000",
           like_count: 120,
           comments_count: 8,
+          view_count: 4321,
           media_url: "https://cdn.example/video.mp4",
           thumbnail_url: "https://cdn.example/capa.jpg",
         },
@@ -58,6 +59,11 @@ describe("interpretarBusinessDiscovery", () => {
     expect(p.posts[1].comentarios).toBe(3);
   });
 
+  it("lê views dos Reels e deixa null onde a Meta não manda", () => {
+    expect(p.posts[0].views).toBe(4321);
+    expect(p.posts[1].views).toBeNull();
+  });
+
   it("falha com resposta sem business_discovery", () => {
     expect(() => interpretarBusinessDiscovery({ id: "x" })).toThrow();
   });
@@ -70,6 +76,24 @@ describe("urlBusinessDiscovery", () => {
     expect(u.searchParams.get("fields")).toContain("business_discovery.username(abc)");
     expect(u.searchParams.get("fields")).toContain("media.limit(10)");
     expect(u.searchParams.get("access_token")).toBe("T");
+  });
+
+  it("pede view_count por padrão e permite tirar", () => {
+    const com = new URL(urlBusinessDiscovery({ versao: "v23.0", igUserId: "1", handle: "a", token: "T" }));
+    const sem = new URL(urlBusinessDiscovery({ versao: "v23.0", igUserId: "1", handle: "a", token: "T", comViews: false }));
+    expect(com.searchParams.get("fields")).toContain("view_count");
+    expect(sem.searchParams.get("fields")).not.toContain("view_count");
+  });
+});
+
+describe("ids e erros de campo", () => {
+  it("prefixa o id do post com o perfil", () => {
+    expect(idPostHub(7, "1789")).toBe("7_1789");
+  });
+  it("reconhece erro de campo inexistente e ignora os outros", () => {
+    expect(erroDeCampo({ error: { code: 100, message: "Tried accessing nonexisting field (view_count)" } })).toBe(true);
+    expect(erroDeCampo({ error: { code: 190, message: "token" } })).toBe(false);
+    expect(erroDeCampo({})).toBe(false);
   });
 });
 

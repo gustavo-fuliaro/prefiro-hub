@@ -8,7 +8,7 @@ web
 
 ## Users
 
-Equipe interna da Prefiro Consórcio (marketing e estratégia, com papéis admin, estrategista, criador e leitura). Usam o Hub principalmente no computador, no escritório, para acompanhar números, planejar a semana de conteúdo e revisar roteiros. O celular serve só para consultas rápidas.
+Multiusuário. A conta administradora principal é a da Prefiro Consórcio (equipe de marketing e estratégia, no computador do escritório), que cadastra outros usuários e empresas. Cada usuário tem um ambiente próprio e isolado: os próprios perfis monitorados, métricas, relatórios, notificações e configurações, sem acesso aos dados de outros ambientes, nem aos da Prefiro.
 
 ## Product Purpose
 
@@ -16,13 +16,13 @@ Acompanhar, comparar e planejar o conteúdo dos perfis de Instagram da empresa e
 
 ## Positioning
 
-Ferramenta interna feita para o dia a dia de uma corretora de consórcio 100% digital: une números reais da API oficial da Meta, planejamento editorial e IA que escreve com o posicionamento de cada perfil, num só lugar.
+Ferramenta feita para o dia a dia de uma corretora de consórcio 100% digital: une números reais da API oficial da Meta e planejamento editorial num só lugar, com ambientes isolados por usuário.
 
 ## Operating Context
 
 - Coleta automática diária (06:00), alertas (06:20) e relatório semanal (segunda, 08:00).
-- Fluxo: Perfis e Comparativo para ler números; Metas e Alertas para acompanhar; Planejador, Calendário e Briefings para produzir; Estratégia e Estúdio de IA para escrever; Progresso para o relatório semanal, impresso ou salvo em PDF.
-- Estúdio de IA pode estar bloqueado (cadeado controlado por admin).
+- Fluxo: Perfis e Comparativo para ler números; Metas e o sino de notificações para acompanhar; Planejador, Calendário e Briefings para produzir; Progresso para o relatório semanal, impresso ou salvo em PDF; Usuários (só a conta principal) para gerenciar acessos.
+- Estratégia e Estúdio de IA foram removidos em 26/10/2026 (os dados antigos ficam guardados no banco).
 
 ## Capabilities and Constraints
 

@@ -45,6 +45,10 @@ typography:
     fontSize: "0.75rem"
     fontWeight: 600
     letterSpacing: "0.025em"
+  micro:
+    fontFamily: "Inter, Segoe UI, system-ui, sans-serif"
+    fontSize: "11px"
+    fontWeight: 600
 rounded:
   balao: "14px 14px 14px 4px"
   balao-sm: "12px 12px 12px 4px"
@@ -147,6 +151,7 @@ Paleta institucional da Prefiro: um laranja protagonista sobre neutros quentes, 
 - **Title** (700, 1.125rem): títulos de seção e de coluna.
 - **Body** (400, 1rem, 1.5): textos e descrições; descrição do cabeçalho limitada a 48ch para a ação caber ao lado do título.
 - **Label** (600, 0.75rem, 0.025em, caixa alta): rótulos de KPI e cabeçalhos de tabela.
+- **Micro** (600–700, 11px): contadores em pílula (sino), selos (Métrica principal, tipo de post) e marcas dos eixos dos gráficos.
 
 ### Named Rules
 **The Número Tabular Rule.** Todo dado numérico usa algarismos tabulares, e colunas numéricas não quebram linha.
@@ -191,7 +196,8 @@ A forma-assinatura é o balão de fala: cantos de 14px com o inferior esquerdo e
 - **Focus:** borda laranja com halo laranja translúcido de 3px; cursor de texto laranja.
 
 ### Navigation
-- **Trilho:** Cinza Escuro, texto claro; item ativo em balão laranja sólido com texto escuro; hover em cinza um tom acima. Contador de alertas em pílula vermelha; cadeado do Estúdio quando bloqueado.
+- **Trilho:** Cinza Escuro, texto claro; item ativo em balão laranja sólido com texto escuro; hover em cinza um tom acima. "Usuários" só aparece para a conta administradora principal.
+- **Sino de notificações:** no canto superior direito do conteúdo (no celular, na barra escura do topo). Botão de 40px em balão, contador em pílula vermelha; o painel cresce do sino (180ms), não lidas em Laranja Bruma com ponto da severidade.
 
 ### Fala da Prefiro
 Bloco de destaques do relatório semanal: balão em Laranja Bruma com a estrela laranja à esquerda.

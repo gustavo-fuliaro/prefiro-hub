@@ -27,3 +27,15 @@ export async function adicionarPerfil(_prev: EstadoForm, form: FormData): Promis
   revalidatePath("/perfis");
   return { ok: `@${handle} adicionado.` };
 }
+
+// Exclui um perfil monitorado e todo o histórico ligado a ele (números, posts, metas, ideias e alertas).
+// O RLS só deixa excluir perfis da própria conta, e só para admin ou estrategista.
+export async function excluirPerfil(id: number): Promise<{ erro?: string; ok?: string }> {
+  if (!Number.isInteger(id) || id <= 0) return { erro: "Perfil inválido." };
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("perfis").delete().eq("id", id).select("handle");
+  if (error) return { erro: "Não foi possível excluir o perfil. Tente de novo." };
+  if (!data?.length) return { erro: "Perfil não encontrado ou seu papel não permite excluir." };
+  revalidatePath("/", "layout");
+  return { ok: `@${data[0].handle} foi excluído.` };
+}

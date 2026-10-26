@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { SeletorPerfil } from "@/components/seletor-perfil";
-import { estudioLiberado } from "@/lib/config";
 import { escolherPerfil, listarIdeias, listarPerfisAtivos, listarPostsRecentes } from "@/lib/dados-planejador";
 import { membroAtual, podeEditarConteudo } from "@/lib/membro";
 import { Quadro } from "./quadro";
@@ -22,7 +21,7 @@ export default async function PlanejadorPage({ searchParams }: { searchParams: P
     );
   }
 
-  const [ideias, posts, iaLiberada] = await Promise.all([listarIdeias(perfil.id), listarPostsRecentes(perfil.id), estudioLiberado()]);
+  const [ideias, posts] = await Promise.all([listarIdeias(perfil.id), listarPostsRecentes(perfil.id)]);
   const pilares = [...new Set(ideias.map((i) => i.pilar).filter((p): p is string => !!p))].sort();
 
   return (
@@ -42,7 +41,6 @@ export default async function PlanejadorPage({ searchParams }: { searchParams: P
         pilares={pilares}
         podeEditar={podeEditarConteudo(membro?.papel)}
         abrirIdeia={Number(busca.ideia) || null}
-        iaLiberada={iaLiberada}
       />
     </div>
   );

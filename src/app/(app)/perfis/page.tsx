@@ -6,6 +6,7 @@ import { formatarNumero, formatarPct, formatarVariacao } from "@/lib/metricas";
 import { GRUPOS, type Grupo } from "@/lib/perfis";
 import { createClient } from "@/lib/supabase/server";
 import { ColetarBotao } from "./coletar-botao";
+import { ExcluirPerfil } from "./excluir-perfil";
 import { NovoPerfilForm } from "./novo-perfil-form";
 
 export const metadata: Metadata = { title: "Perfis" };
@@ -77,6 +78,7 @@ export default async function PerfisPage() {
                 <th className="px-4 py-3 text-right font-semibold">30 dias</th>
                 <th className="px-4 py-3 text-right font-semibold">Engajamento</th>
                 <th className="px-4 py-3 font-semibold">Situação</th>
+                {pode && <th className="px-4 py-3"><span className="sr-only">Ações</span></th>}
               </tr>
             </thead>
             <tbody>
@@ -107,6 +109,11 @@ export default async function PerfisPage() {
                       <span className="text-warn">Aguardando 1ª coleta</span>
                     )}
                   </td>
+                  {pode && (
+                    <td className="px-2 py-3 text-right">
+                      <ExcluirPerfil id={p.id} handle={p.handle} compacto />
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

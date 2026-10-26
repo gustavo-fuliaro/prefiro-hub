@@ -265,6 +265,18 @@ dialog::backdrop {
   }
 }
 
+/* Painel de notificações: cresce a partir do sino (canto superior direito). */
+.painel-notificacoes {
+  transform-origin: top right;
+  animation: painel-entra 180ms var(--ease-out);
+}
+@keyframes painel-entra {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(-4px);
+  }
+}
+
 /* Mosaico do login: peças entram em sequência, uma vez. */
 .mosaico-peca {
   animation: peca-entra 520ms var(--ease-out) both;

@@ -32,7 +32,6 @@ export function Quadro({
   pilares,
   podeEditar,
   abrirIdeia,
-  iaLiberada,
 }: {
   perfil: PerfilCurto;
   ideiasIniciais: Ideia[];
@@ -40,7 +39,6 @@ export function Quadro({
   pilares: string[];
   podeEditar: boolean;
   abrirIdeia: number | null;
-  iaLiberada: boolean;
 }) {
   const router = useRouter();
   const [ideias, setIdeias] = useState(ideiasIniciais);
@@ -218,7 +216,6 @@ export function Quadro({
           posts={posts}
           pilares={pilares}
           podeEditar={podeEditar}
-          iaLiberada={iaLiberada}
           aoFechar={() => setEditando(null)}
           aoSalvar={() => {
             setEditando(null);

@@ -3,6 +3,8 @@
 
 export const CAMPOS_MIDIA =
   "id,caption,media_type,media_product_type,permalink,timestamp,like_count,comments_count,media_url,thumbnail_url";
+// view_count: visualizações de Reels (pagas + orgânicas), disponível no Business Discovery.
+export const CAMPO_VIEWS = "view_count";
 
 export function urlBusinessDiscovery(opts: {
   versao: string;
@@ -10,12 +12,14 @@ export function urlBusinessDiscovery(opts: {
   handle: string;
   token: string;
   limiteMidias?: number;
+  comViews?: boolean;
 }): string {
   const limite = opts.limiteMidias ?? 25;
+  const midia = opts.comViews === false ? CAMPOS_MIDIA : `${CAMPOS_MIDIA},${CAMPO_VIEWS}`;
   const campos =
     `business_discovery.username(${opts.handle})` +
     `{id,username,name,biography,followers_count,follows_count,media_count,profile_picture_url,` +
-    `media.limit(${limite}){${CAMPOS_MIDIA}}}`;
+    `media.limit(${limite}){${midia}}}`;
   const qs = new URLSearchParams({ fields: campos, access_token: opts.token });
   return `https://graph.facebook.com/${opts.versao}/${opts.igUserId}?${qs.toString()}`;
 }
@@ -29,6 +33,7 @@ export type PostColetado = {
   publicado_em: string | null;
   likes: number | null; // null quando o perfil oculta curtidas
   comentarios: number | null;
+  views: number | null; // só Reels; null em foto e carrossel
   imagem_url: string | null; // capa do vídeo ou a própria imagem
 };
 
@@ -75,6 +80,7 @@ export function interpretarBusinessDiscovery(json: unknown): PerfilColetado {
         publicado_em: str(m.timestamp),
         likes: num(m.like_count),
         comentarios: num(m.comments_count),
+        views: num(m.view_count),
         imagem_url: str(m.thumbnail_url) ?? (m.media_type === "VIDEO" ? null : str(m.media_url)),
       })),
   };
@@ -90,6 +96,17 @@ export function mensagemErroMeta(json: unknown, status: number): string {
     return "Perfil não encontrado ou não é conta Business/Creator.";
   if (e.code === 10 || e.code === 200) return "O token não tem permissão para esta consulta.";
   return `Meta: ${e.message ?? "erro desconhecido"}`;
+}
+
+// A Meta recusou um campo pedido (ex.: view_count em versões antigas da API): tenta de novo sem ele.
+export function erroDeCampo(json: unknown): boolean {
+  const e = (json as { error?: { code?: number; message?: string } })?.error;
+  return e?.code === 100 && /field|campo/i.test(e.message ?? "");
+}
+
+// Id do post no Hub: o mesmo post pode ser monitorado por contas diferentes, então o id leva o perfil.
+export function idPostHub(perfilId: number, mediaId: string): string {
+  return `${perfilId}_${mediaId}`;
 }
 
 // Data do dia no fuso de São Paulo (AAAA-MM-DD).

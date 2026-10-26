@@ -1,9 +1,12 @@
 // Edge Function: coleta diária dos perfis do Hub pela API oficial da Meta (Business Discovery).
-// Disparada pelo pg_cron (cabeçalho x-cron-secret) ou pelo botão "Coletar agora" (JWT de admin/estrategista).
+// Disparada pelo pg_cron (cabeçalho x-cron-secret, todas as contas) ou pelo botão "Coletar agora"
+// (JWT de admin/estrategista ativo, só os perfis da conta de quem clicou).
 // Segredos ficam no Vault do Supabase: meta_access_token, meta_ig_user_id, hub_cron_secret.
 import { createClient, type SupabaseClient } from "jsr:@supabase/supabase-js@2";
 import {
   diaSaoPaulo,
+  erroDeCampo,
+  idPostHub,
   interpretarBusinessDiscovery,
   mensagemErroMeta,
   type PerfilColetado,
@@ -34,18 +37,22 @@ async function segredo(db: SupabaseClient, nome: string): Promise<string | null>
   return (data as string | null) ?? null;
 }
 
-async function autorizar(req: Request, db: SupabaseClient): Promise<{ origem: "cron" | "manual"; userId: string | null } | null> {
+type Acesso = { origem: "cron" | "manual"; userId: string | null; contaId: number | null };
+
+async function autorizar(req: Request, db: SupabaseClient): Promise<Acesso | null> {
   const cronHeader = req.headers.get("x-cron-secret");
   if (cronHeader) {
     const esperado = await segredo(db, "hub_cron_secret");
-    return esperado && cronHeader === esperado ? { origem: "cron", userId: null } : null;
+    return esperado && cronHeader === esperado ? { origem: "cron", userId: null, contaId: null } : null;
   }
   const jwt = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
   if (!jwt) return null;
   const { data: u } = await db.auth.getUser(jwt);
   if (!u?.user) return null;
-  const { data: m } = await db.schema("hub").from("membros").select("papel").eq("user_id", u.user.id).maybeSingle();
-  return m && ["admin", "estrategista"].includes(m.papel) ? { origem: "manual", userId: u.user.id } : null;
+  const { data: m } = await db.schema("hub").from("membros").select("papel, conta_id, ativo").eq("user_id", u.user.id).maybeSingle();
+  return m && m.ativo && ["admin", "estrategista"].includes(m.papel)
+    ? { origem: "manual", userId: u.user.id, contaId: m.conta_id as number }
+    : null;
 }
 
 async function copiarImagem(db: SupabaseClient, url: string, caminho: string): Promise<string | null> {
@@ -71,7 +78,7 @@ async function salvar(db: SupabaseClient, perfil: Perfil, c: PerfilColetado, dia
   if (eSnap) throw new Error(`Falha ao gravar números do dia: ${eSnap.message}`);
 
   if (c.posts.length) {
-    const ids = c.posts.map((p) => p.id);
+    const ids = c.posts.map((p) => idPostHub(perfil.id, p.id));
     const { data: existentes } = await hub.from("posts").select("id, thumb_path").in("id", ids);
     const comCapa = new Set((existentes ?? []).filter((p) => p.thumb_path).map((p) => p.id));
 
@@ -79,12 +86,13 @@ async function salvar(db: SupabaseClient, perfil: Perfil, c: PerfilColetado, dia
     const linhas = [];
     for (const p of c.posts) {
       let thumb: string | null = null;
-      if (!comCapa.has(p.id) && p.imagem_url && baixadas < IMAGENS_POR_PERFIL) {
+      const id = idPostHub(perfil.id, p.id);
+      if (!comCapa.has(id) && p.imagem_url && baixadas < IMAGENS_POR_PERFIL) {
         thumb = await copiarImagem(db, p.imagem_url, `${perfil.handle}/posts/${p.id}.jpg`);
         baixadas++;
       }
       linhas.push({
-        id: p.id, perfil_id: perfil.id, tipo: p.tipo, produto: p.produto, legenda: p.legenda,
+        id, media_id: p.id, perfil_id: perfil.id, tipo: p.tipo, produto: p.produto, legenda: p.legenda,
         permalink: p.permalink, publicado_em: p.publicado_em,
         ...(thumb ? { thumb_path: thumb } : {}),
       });
@@ -93,7 +101,7 @@ async function salvar(db: SupabaseClient, perfil: Perfil, c: PerfilColetado, dia
     if (ePosts) throw new Error(`Falha ao gravar posts: ${ePosts.message}`);
 
     const { error: eMet } = await hub.from("post_metricas").upsert(
-      c.posts.map((p) => ({ post_id: p.id, dia, likes: p.likes, comentarios: p.comentarios })),
+      c.posts.map((p) => ({ post_id: idPostHub(perfil.id, p.id), dia, likes: p.likes, comentarios: p.comentarios, views: p.views })),
       { onConflict: "post_id,dia" },
     );
     if (eMet) throw new Error(`Falha ao gravar métricas dos posts: ${eMet.message}`);
@@ -131,12 +139,13 @@ Deno.serve(async (req) => {
   }
 
   let consulta = hub.from("perfis").select("id, handle, nome").eq("ativo", true).order("id");
+  if (acesso.contaId !== null) consulta = consulta.eq("conta_id", acesso.contaId);
   if (corpo.perfil_id) consulta = consulta.eq("id", corpo.perfil_id);
   const { data: perfis, error } = await consulta;
   if (error) return resposta({ erro: error.message }, 500);
 
   const { data: coleta } = await hub.from("coletas")
-    .insert({ origem: acesso.origem, disparada_por: acesso.userId })
+    .insert({ origem: acesso.origem, disparada_por: acesso.userId, conta_id: acesso.contaId })
     .select("id").single();
 
   const dia = diaSaoPaulo();
@@ -145,8 +154,14 @@ Deno.serve(async (req) => {
   for (const [i, perfil] of (perfis as Perfil[]).entries()) {
     if (i > 0) await dormir(PAUSA_MS);
     try {
-      const r = await fetch(urlBusinessDiscovery({ versao: VERSAO_GRAPH, igUserId, handle: perfil.handle, token }));
-      const json = await r.json().catch(() => ({}));
+      const pedir = (comViews: boolean) =>
+        fetch(urlBusinessDiscovery({ versao: VERSAO_GRAPH, igUserId, handle: perfil.handle, token, comViews }));
+      let r = await pedir(true);
+      let json = await r.json().catch(() => ({}));
+      if (!r.ok && erroDeCampo(json)) {
+        r = await pedir(false);
+        json = await r.json().catch(() => ({}));
+      }
       if (!r.ok) throw new Error(mensagemErroMeta(json, r.status));
       await salvar(db, perfil, interpretarBusinessDiscovery(json), dia);
       detalhes.push({ handle: perfil.handle, ok: true });

@@ -1,21 +1,28 @@
 # Prefiro Hub
 
-Painel open source para acompanhar, comparar e planejar o conteúdo de vários perfis do Instagram. Feito pela Prefiro Consórcio para uso interno, e aberto para outras empresas instalarem.
+Painel open source para acompanhar, comparar e planejar o conteúdo de vários perfis do Instagram. Feito pela Prefiro Consórcio e multiusuário: cada usuário tem um ambiente próprio e isolado.
 
 ## O que faz
 
 | Tela | Para quê |
 |---|---|
-| **Perfis** | Cadastro dos perfis (próprios, time, parceiros, concorrentes) e cockpit de cada um: seguidores, evolução, farol, posts com miniaturas. |
+| **Perfis** | Cadastro e exclusão dos perfis (próprios, time, parceiros, concorrentes) e cockpit de cada um: seguidores, views, curtidas, comentários, posts por dia e engajamento no tempo, desempenho dos últimos 8 posts e posts com miniaturas. |
 | **Comparativo** | Ranking e participação de cada perfil em audiência, crescimento, engajamento e volume de posts. |
 | **Metas** | Alvos por perfil (seguidores, engajamento, posts no mês) com previsão de quando serão atingidos. |
-| **Alertas** | Queda de seguidores, post acima da média, meta fora do ritmo, falha na coleta e relatório pronto. |
 | **Planejador** | Quadro de ideias por perfil, com arrastar e soltar, e ligação da ideia ao post publicado. |
 | **Calendário** | Postagens planejadas de todos os perfis. |
 | **Briefings** | Roteiro, checklist e ambiente de gravação de cada ideia. |
-| **Estratégia** | Posicionamento e pilares de conteúdo de cada perfil. |
-| **Estúdio de IA** | Ideias, roteiros e leitura dos posts escritos com o Claude, usando o posicionamento e os números do perfil. Tem cadeado: só funciona depois que um admin libera. |
 | **Progresso** | Relatório semanal automático (segunda, 8h): ganho de seguidores, posts, interações, melhores posts, metas e ideias publicadas. Dá para imprimir ou salvar em PDF. |
+| **Notificações** (sino no topo) | Queda de seguidores, post acima da média, meta fora do ritmo, falha na coleta e relatório pronto, com contador de não lidas. |
+| **Usuários** (só a conta principal) | Cadastrar, editar, bloquear, liberar e excluir usuários, e gerar senha provisória. |
+
+## Multiusuário e isolamento
+
+- Cada usuário pertence a uma **conta** (ambiente). Perfis, números coletados, posts, metas, ideias, briefings, relatórios e notificações pertencem a uma conta.
+- O isolamento é feito no banco, por Row Level Security: toda consulta só enxerga a conta de quem está logado, seja pela tela, pela API ou por uma URL montada à mão. O mesmo @ pode ser monitorado por contas diferentes, cada uma com o próprio histórico.
+- A **conta administradora principal** (`super_admin`) gerencia os usuários pela aba Usuários, sem acesso aos dados dos outros ambientes. Criar, bloquear, redefinir senha e excluir passam pela Edge Function `admin-usuarios`, que confere quem chama e usa a chave de serviço só no servidor.
+- Senhas ficam no Supabase Auth (hash bcrypt). O admin gera uma senha provisória; no primeiro acesso, o Hub obriga a pessoa a criar a própria senha.
+- Usuário bloqueado perde o acesso aos dados na hora (o banco deixa de liberar) e não consegue mais entrar (login banido) até ser liberado.
 
 ## Como funciona
 
@@ -23,37 +30,37 @@ Painel open source para acompanhar, comparar e planejar o conteúdo de vários p
 - **Supabase** para login, banco (Postgres com Row Level Security), arquivos, Edge Functions e rotinas agendadas (`pg_cron` + `pg_net`).
 - Todas as tabelas ficam no schema `hub`, separado de qualquer outra tabela do projeto.
 - Dados do Instagram vêm só da **API oficial da Meta** (Graph API com Business Discovery). Nada de raspagem. Só contas Business ou Creator podem ser lidas.
-- Segredos (token da Meta, chave da Anthropic) ficam no **Vault do Supabase**, nunca no código nem no navegador.
+- Segredos (token da Meta) ficam no **Vault do Supabase**, nunca no código nem no navegador.
 
 ### Rotinas automáticas
 
 | Horário (Brasília) | Rotina |
 |---|---|
-| Todo dia, 06:00 | `coletar-perfis`: seguidores, posts e métricas de cada perfil ativo |
+| Todo dia, 06:00 | `coletar-perfis`: seguidores, posts e métricas (curtidas, comentários, views de Reels) de cada perfil ativo, de todas as contas |
 | Todo dia, 06:20 | `hub.gerar_alertas()` |
-| Segunda, 08:00 | `hub.gerar_relatorio_semanal()` para a semana anterior |
+| Segunda, 08:00 | `hub.gerar_relatorio_semanal()` para a semana anterior, um relatório por conta |
 
 ## Papéis
 
 | Papel | Pode |
 |---|---|
-| `admin` | Tudo, inclusive liberar ou bloquear o Estúdio de IA |
-| `estrategista` | Cadastrar perfis, metas e posicionamento; gerar relatórios; criar conteúdo |
-| `criador` | Criar e editar ideias, briefings e materiais; usar o Estúdio |
+| `admin` | Tudo dentro do próprio ambiente (usuários novos entram como admin do ambiente deles) |
+| `estrategista` | Cadastrar e excluir perfis, metas; gerar relatórios; criar conteúdo |
+| `criador` | Criar e editar ideias e briefings |
 | `leitura` | Só ver |
 
 As regras ficam no banco (Row Level Security), não só na tela.
 
 ## Instalação
 
-Você vai precisar de: um projeto no [Supabase](https://supabase.com) (o plano gratuito serve para começar), um app na [Meta for Developers](https://developers.facebook.com) ligado a uma conta Instagram Business, Node.js 20 ou mais novo e, para o Estúdio, uma chave da API da Anthropic com créditos.
+Você vai precisar de: um projeto no [Supabase](https://supabase.com) (o plano gratuito serve para começar), um app na [Meta for Developers](https://developers.facebook.com) ligado a uma conta Instagram Business, Node.js 20 ou mais novo.
 
 ### 1. Banco
 
 1. Em *Database › Extensions*, ative `pg_cron` e `pg_net`.
 2. Rode os arquivos de `supabase/migrations/` em ordem de nome (SQL Editor ou `supabase db push`).
 3. Em *Project Settings › Data API › Exposed schemas*, adicione `hub`.
-4. Crie seu usuário em *Authentication › Users* e rode `supabase/seed/primeiro_admin.sql` com o seu e-mail.
+4. Crie seu usuário em *Authentication › Users* e rode `supabase/seed/primeiro_admin.sql` com o nome da empresa, o seu nome e o seu e-mail. Isso cria o ambiente da empresa e faz de você a conta administradora principal.
 
 ### 2. Meta (coleta)
 
@@ -71,10 +78,10 @@ supabase functions deploy coletar-perfis --no-verify-jwt
 ```
 
 ```bash
-supabase functions deploy gerar-conteudo --no-verify-jwt
+supabase functions deploy admin-usuarios --no-verify-jwt
 ```
 
-As duas checam o acesso por conta própria (segredo do cron ou login de um membro com papel permitido), por isso o `--no-verify-jwt`.
+As duas checam o acesso por conta própria (segredo do cron, login de admin/estrategista ativo ou da conta administradora principal), por isso o `--no-verify-jwt`.
 
 ### 4. Rotinas
 
@@ -84,15 +91,7 @@ No SQL Editor, rode uma vez cada arquivo de `supabase/seed/`, trocando os marcad
 - `agendar_alertas.sql`
 - `agendar_relatorio.sql`
 
-### 5. Estúdio de IA (opcional)
-
-1. Crie uma chave em [console.anthropic.com](https://console.anthropic.com) e compre créditos em *Plans & Billing*.
-2. Crie o segredo `anthropic_api_key` no Vault.
-3. No Hub, entre como admin, abra **Estúdio de IA** e clique em **Liberar Estúdio**.
-
-O Estúdio começa bloqueado. Enquanto estiver assim, ninguém consegue gerar, nem chamando a função direto.
-
-### 6. Site
+### 5. Site
 
 1. Copie `.env.example` para `.env.local` e preencha a URL e a chave publicável do projeto (*Project Settings › API Keys*).
 2. Rode localmente:
@@ -122,12 +121,14 @@ O Estúdio começa bloqueado. Enquanto estiver assim, ninguém consegue gerar, n
 - Row Level Security em todas as tabelas do `hub`; o navegador só usa a chave publicável.
 - Coleta, alertas e relatório rodam no servidor (service role e `security definer` com `search_path` vazio).
 - Segredos só no Vault, lidos por `hub.segredo()`, que só o service role executa e que só devolve nomes da lista permitida.
+- Isolamento entre contas no banco (RLS por `conta_id`), testado com tentativas de leitura, alteração e exclusão cruzadas.
+- Gestão de usuários só pela Edge Function `admin-usuarios`; a chave de serviço nunca vai ao navegador.
 - Recomendado: ativar *Leaked password protection* em *Authentication › Settings*.
 - Só dados públicos de perfis de terceiros são guardados, sem dados de seguidores individuais (LGPD).
 
 ## Custos de referência
 
-Supabase gratuito ou Pro, hospedagem Node.js que você já tenha e a API da Anthropic por uso (estimativa: US$ 20 a 60 por mês para uma equipe pequena).
+Supabase gratuito ou Pro e uma hospedagem Node.js que você já tenha. A coleta usa a API oficial da Meta, sem custo; todas as contas compartilham o limite de chamadas do token configurado.
 
 ## Licença
 

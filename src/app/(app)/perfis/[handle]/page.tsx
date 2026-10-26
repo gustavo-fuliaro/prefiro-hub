@@ -2,27 +2,17 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Avatar } from "@/components/avatar";
+import { CartaoIndicador } from "@/components/cartao-indicador";
+import { GraficoColunas } from "@/components/grafico-colunas";
 import { IconeAnterior } from "@/components/icones";
-import { Sparkline } from "@/components/sparkline";
+import { indicadores, ultimosPosts, type Leitura } from "@/lib/evolucao";
 import { membroAtual, podeEditarCadastro } from "@/lib/membro";
-import {
-  PERIODOS,
-  engajamento,
-  farol,
-  filtrarPeriodo,
-  formatarNumero,
-  formatarPct,
-  formatarVariacao,
-  lerPeriodo,
-  postsPorDia,
-  variacao,
-  type Farol,
-  type Ponto,
-} from "@/lib/metricas";
+import { PERIODOS, engajamento, filtrarPeriodo, formatarNumero, formatarPct, lerPeriodo, type Ponto } from "@/lib/metricas";
 import { urlMidia } from "@/lib/midia";
 import { GRUPOS, type Grupo } from "@/lib/perfis";
 import { createClient } from "@/lib/supabase/server";
 import { ColetarBotao } from "../coletar-botao";
+import { ExcluirPerfil } from "../excluir-perfil";
 
 type Params = { handle: string };
 type Busca = { periodo?: string };
@@ -38,11 +28,10 @@ type Perfil = {
 };
 type Snapshot = Ponto & { seguindo: number | null };
 type Post = { id: string; tipo: string | null; produto: string | null; legenda: string | null; permalink: string | null; publicado_em: string | null; thumb_path: string | null };
-type Metrica = { post_id: string; dia: string; likes: number | null; comentarios: number | null };
 
 const TIPO: Record<string, string> = { VIDEO: "Reel", CAROUSEL_ALBUM: "Carrossel", IMAGE: "Foto" };
-const COR_FAROL: Record<Farol, string> = { verde: "text-ok", amarelo: "text-warn", vermelho: "text-danger" };
 const dataCurta = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", timeZone: "America/Sao_Paulo" });
+const inteiro = new Intl.NumberFormat("pt-BR");
 
 function hojeSP() {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(new Date());
@@ -52,8 +41,10 @@ export default async function PerfilPage({ params, searchParams }: { params: Pro
   const { handle } = await params;
   const periodo = lerPeriodo((await searchParams).periodo);
   const { membro } = await membroAtual();
+  const pode = podeEditarCadastro(membro?.papel);
   const supabase = await createClient();
 
+  // O RLS só devolve o perfil se ele for da conta de quem está logado.
   const { data: perfil } = await supabase
     .from("perfis")
     .select("id, handle, nome, grupo, bio, foto_path, ultima_coleta_em, ultimo_erro")
@@ -64,40 +55,24 @@ export default async function PerfilPage({ params, searchParams }: { params: Pro
   const [{ data: snaps }, { data: posts }] = await Promise.all([
     supabase.from("snapshots_diarios").select("dia, seguidores, seguindo, total_posts").eq("perfil_id", perfil.id).order("dia").returns<Snapshot[]>(),
     supabase.from("posts").select("id, tipo, produto, legenda, permalink, publicado_em, thumb_path").eq("perfil_id", perfil.id)
-      .order("publicado_em", { ascending: false }).limit(48).returns<Post[]>(),
+      .order("publicado_em", { ascending: false }).limit(60).returns<Post[]>(),
   ]);
 
   const listaPosts = posts ?? [];
   const { data: metricas } = listaPosts.length
-    ? await supabase.from("post_metricas").select("post_id, dia, likes, comentarios").in("post_id", listaPosts.map((p) => p.id)).order("dia").returns<Metrica[]>()
-    : { data: [] as Metrica[] };
+    ? await supabase.from("post_metricas").select("post_id, dia, likes, comentarios, views").in("post_id", listaPosts.map((p) => p.id)).order("dia").returns<Leitura[]>()
+    : { data: [] as Leitura[] };
+  const leituras = metricas ?? [];
 
-  // Última leitura de cada post.
-  const ultima = new Map<string, Metrica>();
-  for (const m of metricas ?? []) ultima.set(m.post_id, m);
+  const ultima = new Map<string, Leitura>();
+  for (const m of leituras) ultima.set(m.post_id, m);
 
+  const hoje = hojeSP();
   const serie = snaps ?? [];
-  const janela = filtrarPeriodo(serie, periodo, hojeSP());
+  const janela = filtrarPeriodo(serie, periodo, hoje);
   const atual = serie.at(-1);
-
-  const vSeg = variacao(janela, (p) => p.seguidores);
-  const ppd = postsPorDia(janela);
-  const ppdBase = postsPorDia(filtrarPeriodo(serie, "tudo", hojeSP()));
-
-  // Interações médias por post, dia a dia (média das leituras feitas naquele dia).
-  const porDia = new Map<string, { soma: number; n: number }>();
-  for (const m of metricas ?? []) {
-    const d = porDia.get(m.dia) ?? { soma: 0, n: 0 };
-    d.soma += (m.likes ?? 0) + (m.comentarios ?? 0);
-    d.n += 1;
-    porDia.set(m.dia, d);
-  }
-  const serieInter = filtrarPeriodo(
-    [...porDia.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([dia, d]) => ({ dia, valor: d.soma / d.n })),
-    periodo,
-    hojeSP(),
-  );
-  const vInter = variacao(serieInter, (p) => p.valor);
+  const ind = indicadores({ snapshots: serie, leituras, periodo, hoje });
+  const barras = ultimosPosts(listaPosts, leituras, 8);
 
   const recentes = listaPosts.slice(0, 12).map((p) => ultima.get(p.id) ?? { likes: null, comentarios: null });
   const eng = engajamento(recentes, atual?.seguidores ?? null);
@@ -109,24 +84,7 @@ export default async function PerfilPage({ params, searchParams }: { params: Pro
     .sort((a, b) => b.inter - a.inter)
     .slice(0, 3);
 
-  const cards = [
-    {
-      titulo: "Seguidores", destaque: true,
-      valor: formatarVariacao(vSeg.abs), sub: vSeg.base !== null ? `${formatarNumero(vSeg.base)} → ${formatarNumero(vSeg.atual)}` : "—",
-      pct: vSeg.pct, serie: janela.map((p) => p.seguidores).filter((v): v is number => v !== null),
-    },
-    {
-      titulo: "Posts por dia", valor: ppd === null ? "—" : ppd.toFixed(1).replace(".", ","),
-      sub: `Total: ${formatarNumero(atual?.total_posts ?? null)} posts`,
-      pct: ppd !== null && ppdBase ? ((ppd - ppdBase) / ppdBase) * 100 : null,
-      serie: janela.map((p) => p.total_posts).filter((v): v is number => v !== null),
-    },
-    {
-      titulo: "Interações por post", valor: formatarVariacao(vInter.abs === null ? null : Math.round(vInter.abs)),
-      sub: vInter.base !== null ? `${formatarNumero(vInter.base)} → ${formatarNumero(vInter.atual)}` : "—",
-      pct: vInter.pct, serie: serieInter.map((p) => p.valor),
-    },
-  ];
+  const fmtDia = (d: string) => dataCurta.format(new Date(`${d}T12:00:00Z`));
 
   return (
     <div className="grid max-w-6xl gap-8">
@@ -144,7 +102,12 @@ export default async function PerfilPage({ params, searchParams }: { params: Pro
           </div>
           {perfil.bio && <p className="mt-2 max-w-2xl whitespace-pre-line text-sm text-muted">{perfil.bio}</p>}
         </div>
-        {podeEditarCadastro(membro?.papel) && <ColetarBotao perfilId={perfil.id} rotulo="Atualizar este perfil" />}
+        {pode && (
+          <div className="flex flex-wrap items-center gap-2">
+            <ColetarBotao perfilId={perfil.id} rotulo="Atualizar este perfil" />
+            <ExcluirPerfil id={perfil.id} handle={perfil.handle} voltarParaLista />
+          </div>
+        )}
       </header>
 
       {perfil.ultimo_erro && (
@@ -165,19 +128,19 @@ export default async function PerfilPage({ params, searchParams }: { params: Pro
         ))}
       </section>
 
-      <section className="grid gap-4">
+      <section className="grid gap-4" aria-labelledby="evolucao">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h2 className="font-display text-xl font-bold">Evolução no tempo</h2>
+            <h2 id="evolucao" className="font-display text-xl font-bold">Evolução no tempo</h2>
             <p className="text-sm text-muted">
               {janela.length > 1
-                ? `De ${dataCurta.format(new Date(`${janela[0].dia}T12:00:00Z`))} a ${dataCurta.format(new Date(`${janela.at(-1)!.dia}T12:00:00Z`))}. Verde: subiu mais de 2%. Vermelho: caiu mais de 2%.`
+                ? `De ${fmtDia(janela[0].dia)} a ${fmtDia(janela.at(-1)!.dia)}. Verde: subiu mais de 2%. Vermelho: caiu mais de 2%.`
                 : serie.length === 1
                   ? "Primeiro registro salvo. As curvas aparecem a partir da próxima coleta."
                   : "Ainda sem registros neste período."}
             </p>
           </div>
-          <nav aria-label="Período" className="flex gap-1 rounded-balao-sm border border-line bg-surface p-1 text-sm shadow-card">
+          <nav aria-label="Período" className="flex flex-wrap gap-1 rounded-balao-sm border border-line bg-surface p-1 text-sm shadow-card">
             {PERIODOS.map((p) => (
               <Link
                 key={p.valor}
@@ -190,22 +153,56 @@ export default async function PerfilPage({ params, searchParams }: { params: Pro
             ))}
           </nav>
         </div>
-        <div className="grid gap-4 lg:grid-cols-3">
-          {cards.map((c) => {
-            const cor = farol(c.pct);
-            return (
-              <div key={c.titulo} className={`grid gap-2 rounded-balao border bg-surface p-4 ${c.destaque ? "border-accent" : "border-line"}`}>
-                <div className="text-xs font-semibold uppercase tracking-wide text-muted">{c.titulo}</div>
-                <div className="flex items-baseline gap-2">
-                  <span className={`font-display text-3xl font-bold tabular-nums ${COR_FAROL[cor]}`}>{c.valor}</span>
-                  {c.pct !== null && <span className={`text-sm font-semibold ${COR_FAROL[cor]}`}>{c.pct > 0 ? "+" : ""}{formatarPct(c.pct)}</span>}
-                </div>
-                <div className="text-sm text-muted tabular-nums">{c.sub}</div>
-                <Sparkline valores={c.serie} farol={cor} rotulo={`Evolução de ${c.titulo}`} />
-              </div>
-            );
-          })}
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {ind.map((i) => <CartaoIndicador key={i.chave} i={i} />)}
         </div>
+      </section>
+
+      <section className="grid gap-4" aria-labelledby="desempenho">
+        <div>
+          <h2 id="desempenho" className="font-display text-xl font-bold">Desempenho dos últimos {barras.length || 8} posts</h2>
+          <p className="text-sm text-muted">Última leitura de cada post, do mais antigo ao mais recente. Cada gráfico tem a própria escala.</p>
+        </div>
+        {barras.length === 0 ? (
+          <p className="rounded-balao border border-dashed border-line px-6 py-10 text-center text-sm text-muted">Os posts aparecem depois da primeira coleta.</p>
+        ) : (
+          <>
+            <div className="grid gap-4 rounded-balao border border-line bg-surface p-4 shadow-card lg:grid-cols-3">
+              <GraficoColunas titulo="Curtidas" chave="likes" posts={barras} semDado="Este perfil oculta as curtidas dos posts." />
+              <GraficoColunas titulo="Comentários" chave="comentarios" posts={barras} semDado="Sem comentários registrados nestes posts." />
+              <GraficoColunas titulo="Views" chave="views" posts={barras} semDado="Sem views nestes posts. A Meta só informa views de Reels, e a coleta passou a registrá-las em 26/10/2026." />
+            </div>
+            <details className="rounded-balao border border-line bg-surface px-4 py-3 text-sm shadow-card">
+              <summary className="cursor-pointer font-medium">Ver os números em tabela</summary>
+              <div className="mt-3 overflow-x-auto">
+                <table className="w-full min-w-[560px] text-left">
+                  <thead className="text-xs uppercase tracking-wide text-muted">
+                    <tr className="border-b border-line">
+                      <th className="py-2 pr-3 font-semibold">Data</th>
+                      <th className="py-2 pr-3 font-semibold">Formato</th>
+                      <th className="py-2 pr-3 text-right font-semibold">Curtidas</th>
+                      <th className="py-2 pr-3 text-right font-semibold">Comentários</th>
+                      <th className="py-2 pr-3 text-right font-semibold">Views</th>
+                      <th className="py-2 font-semibold">Post</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {barras.map((b) => (
+                      <tr key={b.id} className="border-b border-line last:border-0">
+                        <td className="py-2 pr-3 tabular-nums">{b.rotulo}</td>
+                        <td className="py-2 pr-3">{b.formato}</td>
+                        <td className="py-2 pr-3 text-right tabular-nums">{b.likes === null ? "—" : inteiro.format(b.likes)}</td>
+                        <td className="py-2 pr-3 text-right tabular-nums">{b.comentarios === null ? "—" : inteiro.format(b.comentarios)}</td>
+                        <td className="py-2 pr-3 text-right tabular-nums">{b.views === null ? "—" : inteiro.format(b.views)}</td>
+                        <td className="py-2">{b.permalink ? <a href={b.permalink} target="_blank" rel="noopener noreferrer" className="text-accent-strong hover:underline">Abrir</a> : "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </details>
+          </>
+        )}
       </section>
 
       {destaques.length > 0 && (
@@ -247,10 +244,15 @@ export default async function PerfilPage({ params, searchParams }: { params: Pro
                         {p.produto === "REELS" ? "Reel" : TIPO[p.tipo ?? ""] ?? "Post"}
                       </span>
                     </div>
-                    <div className="flex justify-between gap-2 px-3 py-2 text-xs tabular-nums text-muted">
-                      <span title="Curtidas">{formatarNumero(m?.likes ?? null)} curt.</span>
-                      <span title="Comentários">{formatarNumero(m?.comentarios ?? null)} coment.</span>
-                      <span>{p.publicado_em ? dataCurta.format(new Date(p.publicado_em)) : ""}</span>
+                    <div className="grid gap-0.5 px-3 py-2 text-xs tabular-nums text-muted">
+                      <div className="flex justify-between gap-2">
+                        <span title="Curtidas">{formatarNumero(m?.likes ?? null)} curt.</span>
+                        <span title="Comentários">{formatarNumero(m?.comentarios ?? null)} coment.</span>
+                      </div>
+                      <div className="flex justify-between gap-2">
+                        <span title="Views (só Reels)">{m?.views != null ? `${formatarNumero(m.views)} views` : ""}</span>
+                        <span>{p.publicado_em ? dataCurta.format(new Date(p.publicado_em)) : ""}</span>
+                      </div>
                     </div>
                   </a>
                 </li>

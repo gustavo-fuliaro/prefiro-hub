@@ -19,7 +19,6 @@ export function IdeiaDialog({
   posts,
   pilares,
   podeEditar,
-  iaLiberada,
   aoFechar,
   aoSalvar,
 }: {
@@ -29,7 +28,6 @@ export function IdeiaDialog({
   posts: PostCurto[];
   pilares: string[];
   podeEditar: boolean;
-  iaLiberada: boolean;
   aoFechar: () => void;
   aoSalvar: () => void;
 }) {
@@ -211,11 +209,6 @@ export function IdeiaDialog({
             {ideia && (
               <Link href={`/briefings?perfil=${perfil.handle}#ideia-${ideia.id}`} className="text-sm text-accent-strong hover:underline">
                 Abrir briefing
-              </Link>
-            )}
-            {ideia && podeEditar && iaLiberada && (
-              <Link href={`/estudio?perfil=${perfil.handle}&tipo=roteiro&ideia=${ideia.id}`} className="text-sm text-accent-strong hover:underline">
-                Roteiro com IA
               </Link>
             )}
           </div>
