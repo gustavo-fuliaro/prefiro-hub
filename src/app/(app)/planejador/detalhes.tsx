@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { IconeCalendario, IconeFechar, IconeLink, IconeLixeira, IconePessoa, IconeRelogio } from "@/components/icones";
+import { IconeArroba, IconeCalendario, IconeFechar, IconeLink, IconeLixeira, IconePessoa, IconeRelogio } from "@/components/icones";
 import { LinhasCarregando } from "@/components/marca";
 import {
   aoVivo, apagarComentario, comentar, lerComentarios, lerEventos, lerTarefa, type Comentario,
 } from "@/lib/tarefas-api";
+import { perfilPorId } from "@/lib/perfis-proprios";
 import { dataCurta, descreverEvento, estaAtrasada, estaConcluida, type Evento, type Tarefa } from "@/lib/tarefas";
 import { useAcoesTarefa } from "./acoes";
 import { botao, ChipStatus, type Contexto, Iniciais, MenuAcoes } from "./ui";
@@ -120,6 +121,11 @@ export function DetalhesTarefa({
 
           <div className="grid content-start gap-6 overflow-y-auto p-5">
             <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-2.5 text-sm">
+              {ctx.perfis.length > 0 && (
+                <Campo icone={<IconeArroba />} rotulo="Perfil">
+                  {perfilPorId(ctx.perfis, tarefa.perfil_id) ? `@${perfilPorId(ctx.perfis, tarefa.perfil_id)!.handle}` : <span className="text-muted">Sem perfil</span>}
+                </Campo>
+              )}
               <Campo icone={<IconePessoa />} rotulo="Responsável">
                 {tarefa.responsavel ? (nomes.get(tarefa.responsavel) ?? "Pessoa removida") : <span className="text-muted">Sem responsável</span>}
               </Campo>

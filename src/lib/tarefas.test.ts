@@ -5,7 +5,7 @@ import {
 } from "./tarefas";
 
 const base: Tarefa = {
-  id: 1, conta_id: 1, titulo: "Reel do consórcio", status: "roteirizacao", responsavel: null, vencimento: null,
+  id: 1, conta_id: 1, titulo: "Reel do consórcio", status: "roteirizacao", responsavel: null, perfil_id: null, vencimento: null,
   link_roteiro: null, link_drive: null, data_publicacao: null, ordem: 10, concluida_em: null, publicado_em: null,
   arquivada_em: null, arquivada_auto: false, restaurada_em: null, criado_em: "2026-10-20T10:00:00Z", criado_por: null,
   atualizado_em: "2026-10-20T10:00:00Z", atualizado_por: null,
@@ -88,6 +88,13 @@ describe("ações", () => {
     expect(d).not.toHaveProperty("concluida_em");
     expect(d.link_drive).toBe("https://d");
     expect(d.titulo).toContain("(cópia)");
+  });
+  it("a cópia fica no mesmo perfil", () => {
+    expect(dadosDuplicados(t({ perfil_id: 5 })).perfil_id).toBe(5);
+  });
+  it("descreve troca de perfil", () => {
+    const e = { id: 1, tarefa_id: 1, tipo: "perfil" as const, de: null, para: "dancarlossilva", autor_nome: "A", criado_em: "" };
+    expect(descreverEvento(e, new Map())).toBe("trocou o perfil de sem perfil para @dancarlossilva");
   });
   it("concluir publica o que está agendado e reabrir tira a publicação", () => {
     expect(mudancaConcluir({ status: "agendado" }, "agora")).toEqual({ status: "publicado" });

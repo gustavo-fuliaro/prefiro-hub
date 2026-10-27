@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { IconeReticencias } from "@/components/icones";
+import { perfilPorId, type PerfilProprio } from "@/lib/perfis-proprios";
 import { STATUS_LABEL, type Status } from "@/lib/tarefas";
 
 export type MembroCurto = { user_id: string; nome: string };
@@ -16,7 +17,19 @@ export type Contexto = {
   membros: MembroCurto[];
   podeEditar: boolean; // admin, estrategista, criador
   podeExcluir: boolean; // admin, estrategista
+  perfis: PerfilProprio[]; // perfis próprios do ambiente
+  perfilAtual: number | null; // null = visão em grupo (todos os perfis)
 };
+
+// Etiqueta do perfil da tarefa, mostrada na visão em grupo.
+export function EtiquetaPerfil({ ctx, perfilId }: { ctx: Contexto; perfilId: number | null }) {
+  const p = perfilPorId(ctx.perfis, perfilId);
+  return (
+    <span className={`inline-flex max-w-full items-center truncate rounded-md px-1.5 py-0.5 text-[11px] font-semibold ${p ? "bg-accent-soft text-accent-strong" : "bg-lane text-muted"}`}>
+      {p ? `@${p.handle}` : "Sem perfil"}
+    </span>
+  );
+}
 
 export const campo = "h-10 w-full rounded-md border border-line bg-bg px-3 font-normal text-ink";
 export const botao = "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium";

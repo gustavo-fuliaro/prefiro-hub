@@ -62,6 +62,7 @@ export type ResponsavelRel = {
   pendentes: number;
   atrasadas: number;
 };
+export type PerfilProducaoRel = { id: number | null; handle: string | null; criadas: number; concluidas: number; publicadas: number; pendentes: number; atrasadas: number };
 export type ProducaoRel = {
   criadas: number;
   concluidas: number;
@@ -73,9 +74,12 @@ export type ProducaoRel = {
   movimentos_por_etapa: Partial<Record<Status, number>>;
   etapas_agora: Partial<Record<Status, number>>;
   por_responsavel: ResponsavelRel[];
+  por_perfil: PerfilProducaoRel[]; // só no relatório do grupo (relatórios antigos vêm vazios)
 };
 export type PerfilV2 = DadosRelatorio["perfis"][number] & { likes: number | null; comentarios: number | null; views: number | null };
+export type EscopoRel = { tipo: "grupo" } | { tipo: "perfil"; handle: string };
 export type RelatorioV2 = {
+  escopo: EscopoRel;
   producao: ProducaoRel;
   instagram: { perfis: PerfilV2[]; top_posts: (DadosRelatorio["top_posts"][number] & { views: number | null })[]; indisponiveis: string[] };
 };
@@ -100,7 +104,9 @@ export function lerRelatorioV2(dados: unknown): RelatorioV2 {
   const base = lerRelatorio(ig);
   const perfisBrutos = Array.isArray(ig.perfis) ? (ig.perfis as unknown[]).map(obj) : [];
   const postsBrutos = Array.isArray(ig.top_posts) ? (ig.top_posts as unknown[]).map(obj) : [];
+  const esc = obj(d.escopo);
   return {
+    escopo: esc.tipo === "perfil" && typeof esc.handle === "string" ? { tipo: "perfil", handle: esc.handle } : { tipo: "grupo" },
     producao: {
       criadas: num(p.criadas) ?? 0,
       concluidas: num(p.concluidas) ?? 0,
@@ -118,6 +124,15 @@ export function lerRelatorioV2(dados: unknown): RelatorioV2 {
         concluidas: num(r.concluidas) ?? 0,
         movimentacoes: num(r.movimentacoes) ?? 0,
         acoes: num(r.acoes) ?? 0,
+        pendentes: num(r.pendentes) ?? 0,
+        atrasadas: num(r.atrasadas) ?? 0,
+      })),
+      por_perfil: (Array.isArray(p.por_perfil) ? (p.por_perfil as unknown[]) : []).map(obj).map((r) => ({
+        id: num(r.id),
+        handle: typeof r.handle === "string" ? r.handle : null,
+        criadas: num(r.criadas) ?? 0,
+        concluidas: num(r.concluidas) ?? 0,
+        publicadas: num(r.publicadas) ?? 0,
         pendentes: num(r.pendentes) ?? 0,
         atrasadas: num(r.atrasadas) ?? 0,
       })),

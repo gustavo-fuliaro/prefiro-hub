@@ -149,3 +149,10 @@ export const IconePessoa = ({ className = "size-4" }: P) => (
     <path d="M5 20a7 7 0 0 1 14 0" />
   </svg>
 );
+
+export const IconeArroba = ({ className = "size-4" }: P) => (
+  <svg {...base} className={className}>
+    <circle cx="12" cy="12" r="3.5" />
+    <path d="M15.5 8.5v4.75a2.25 2.25 0 0 0 4.5 0V12a8 8 0 1 0-3.2 6.4" />
+  </svg>
+);

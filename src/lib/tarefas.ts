@@ -28,6 +28,7 @@ export type Tarefa = {
   titulo: string;
   status: Status;
   responsavel: string | null;
+  perfil_id: number | null; // perfil próprio da tarefa (null = sem perfil)
   vencimento: string | null; // AAAA-MM-DD
   link_roteiro: string | null;
   link_drive: string | null;
@@ -45,7 +46,7 @@ export type Tarefa = {
 };
 
 export const CAMPOS_TAREFA =
-  "id, conta_id, titulo, status, responsavel, vencimento, link_roteiro, link_drive, data_publicacao, ordem, concluida_em, publicado_em, arquivada_em, arquivada_auto, restaurada_em, criado_em, criado_por, atualizado_em, atualizado_por";
+  "id, conta_id, titulo, status, responsavel, perfil_id, vencimento, link_roteiro, link_drive, data_publicacao, ordem, concluida_em, publicado_em, arquivada_em, arquivada_auto, restaurada_em, criado_em, criado_por, atualizado_em, atualizado_por";
 
 export function colunaDe(status: Status): ColunaId {
   return status === "agendado" || status === "publicado" ? "final" : status;
@@ -151,6 +152,7 @@ export function dadosDuplicados(t: Tarefa) {
     titulo: `${t.titulo} (cópia)`.slice(0, 200),
     status,
     responsavel: t.responsavel,
+    perfil_id: t.perfil_id,
     vencimento: t.vencimento,
     link_roteiro: t.link_roteiro,
     link_drive: t.link_drive,
@@ -173,7 +175,7 @@ export function mudancaReabrir(t: Pick<Tarefa, "status">): Partial<Tarefa> {
 export type Evento = {
   id: number;
   tarefa_id: number;
-  tipo: "criada" | "status" | "concluida" | "reaberta" | "arquivada" | "restaurada" | "responsavel" | "renomeada";
+  tipo: "criada" | "status" | "concluida" | "reaberta" | "arquivada" | "restaurada" | "responsavel" | "renomeada" | "perfil";
   de: string | null;
   para: string | null;
   autor_nome: string;
@@ -200,6 +202,8 @@ export function descreverEvento(e: Evento, nomes: Map<string, string>): string {
       return `trocou o responsável de ${pessoa(e.de)} para ${pessoa(e.para)}`;
     case "renomeada":
       return `renomeou de "${e.de ?? ""}" para "${e.para ?? ""}"`;
+    case "perfil":
+      return `trocou o perfil de ${e.de ? "@" + e.de : "sem perfil"} para ${e.para ? "@" + e.para : "sem perfil"}`;
   }
 }
 

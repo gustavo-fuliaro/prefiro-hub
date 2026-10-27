@@ -103,6 +103,40 @@ export function RelatorioV2({ dados, anterior, dias }: { dados: unknown; anterio
             </div>
           </div>
         </div>
+
+        {p.por_perfil.some((x) => x.id !== null || x.criadas + x.pendentes + x.concluidas > 0) && (
+          <div className="grid content-start gap-2 rounded-balao border border-line bg-surface p-4 shadow-card">
+            <h4 className="font-display text-base font-bold">Por perfil</h4>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[480px] text-sm">
+                <thead className="text-left text-xs text-muted">
+                  <tr>
+                    <th className="py-1.5 font-semibold">Perfil</th>
+                    <th className="py-1.5 text-right font-semibold">Criadas</th>
+                    <th className="py-1.5 text-right font-semibold">Concluídas</th>
+                    <th className="py-1.5 text-right font-semibold">Publicadas</th>
+                    <th className="py-1.5 text-right font-semibold">Pendentes</th>
+                    <th className="py-1.5 text-right font-semibold">Atrasadas</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {p.por_perfil
+                    .filter((x) => x.id !== null || x.criadas + x.pendentes + x.concluidas > 0)
+                    .map((x) => (
+                      <tr key={x.id ?? "sem"} className="border-t border-line">
+                        <td className={`py-2 ${x.handle ? "font-medium" : "text-muted"}`}>{x.handle ? `@${x.handle}` : "Sem perfil"}</td>
+                        <td className="py-2 text-right tabular-nums">{x.criadas}</td>
+                        <td className="py-2 text-right tabular-nums">{x.concluidas}</td>
+                        <td className="py-2 text-right tabular-nums">{x.publicadas}</td>
+                        <td className="py-2 text-right tabular-nums">{x.pendentes}</td>
+                        <td className={`py-2 text-right tabular-nums ${x.atrasadas > 0 ? "font-semibold text-danger" : ""}`}>{x.atrasadas}</td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </section>
 
       <section aria-labelledby="cat-b" className="grid gap-4">

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { SeletorPerfil } from "@/components/seletor-perfil";
 import { contextoTarefas } from "@/lib/dados-tarefas";
+import { relatorioDoEscopo, rotuloEscopo } from "@/lib/perfis-proprios";
 import { createClient } from "@/lib/supabase/server";
 import { CAMPOS_TAREFA, type Tarefa } from "@/lib/tarefas";
 import { GerarPeriodo, Imprimir } from "./botoes";
@@ -20,6 +22,7 @@ type Item = {
   parcial: boolean;
   gerado_em: string;
   formato: number | null;
+  perfil_handle: string | null; // null = relatório do grupo
 };
 
 const DIA = 86_400_000;
@@ -34,19 +37,22 @@ export default async function ProgressoPage({ searchParams }: { searchParams: Pr
     supabase.from("tarefas").select(CAMPOS_TAREFA).is("arquivada_em", null).returns<Tarefa[]>(),
     supabase
       .from("relatorios")
-      .select("id, tipo, semana_inicio, periodo_inicio, periodo_fim, parcial, gerado_em, formato:dados->formato")
+      .select("id, tipo, semana_inicio, periodo_inicio, periodo_fim, parcial, gerado_em, formato:dados->formato, perfil_handle")
       .order("periodo_fim", { ascending: false })
       .order("id", { ascending: false })
-      .limit(80)
+      .limit(300)
       .returns<Item[]>(),
   ]);
   const lista = itens ?? [];
-  const semanais = lista.filter((r) => r.tipo === "semanal");
-  const personalizados = lista.filter((r) => r.tipo === "personalizado");
-  const escolhido = lista.find((r) => r.id === Number(busca.relatorio)) ?? semanais[0] ?? lista[0] ?? null;
+  // Só os relatórios do perfil em foco (ou os do grupo, na visão "Todos os perfis").
+  const doEscopo = lista.filter((r) => relatorioDoEscopo(r.perfil_handle, ctx.perfis, ctx.perfilAtual));
+  const semanais = doEscopo.filter((r) => r.tipo === "semanal");
+  const personalizados = doEscopo.filter((r) => r.tipo === "personalizado");
+  const escolhido = lista.find((r) => r.id === Number(busca.relatorio)) ?? semanais[0] ?? doEscopo[0] ?? null;
+  const escopoDe = (r: Item) => (r.perfil_handle ? `@${r.perfil_handle}` : "Todos os perfis");
 
   // Comparação padrão: o relatório anterior do mesmo tipo e formato.
-  const candidatos = escolhido ? lista.filter((r) => r.id !== escolhido.id && r.formato === escolhido.formato) : [];
+  const candidatos = escolhido ? lista.filter((r) => r.id !== escolhido.id && r.formato === escolhido.formato && r.perfil_handle === escolhido.perfil_handle) : [];
   const padrao = escolhido
     ? candidatos.find((r) => r.tipo === escolhido.tipo && r.periodo_fim <= escolhido.periodo_inicio) ?? null
     : null;
@@ -87,16 +93,22 @@ export default async function ProgressoPage({ searchParams }: { searchParams: Pr
       </header>
 
       <div className="print:hidden">
-        <PainelAoVivo contaId={ctx.contaId} hoje={ctx.hoje} membros={ctx.membros} iniciais={tarefas ?? []} />
+        <SeletorPerfil perfis={ctx.perfis} atual={ctx.perfilAtual} />
+      </div>
+
+      <div className="print:hidden">
+        <PainelAoVivo contaId={ctx.contaId} hoje={ctx.hoje} membros={ctx.membros} iniciais={tarefas ?? []} perfis={ctx.perfis} perfilAtual={ctx.perfilAtual} />
       </div>
 
       <section aria-labelledby="relatorios" className="grid gap-5">
         <div className="flex flex-wrap items-end justify-between gap-4 print:hidden">
           <div>
             <h2 id="relatorios" className="font-display text-xl font-bold">Relatórios</h2>
-            <p className="text-sm text-muted">Os semanais cobrem de uma sexta às 6h até a seguinte, sem repetir dias. Os de período ficam guardados à parte.</p>
+            <p className="text-sm text-muted">
+              Mostrando os relatórios de {rotuloEscopo(ctx.perfis, ctx.perfilAtual)}. Toda sexta às 6h sai um semanal do grupo e um de cada perfil, de uma sexta até a seguinte, sem repetir dias.
+            </p>
           </div>
-          {ctx.podeEditar && <GerarPeriodo hoje={ctx.hoje} />}
+          {ctx.podeEditar && <GerarPeriodo key={ctx.perfilAtual ?? "todos"} hoje={ctx.hoje} perfis={ctx.perfis} atual={ctx.perfilAtual} />}
         </div>
 
         <div className="grid gap-3 print:hidden">
@@ -120,7 +132,7 @@ export default async function ProgressoPage({ searchParams }: { searchParams: Pr
 
         {!escolhido ? (
           <div className="rounded-balao border border-dashed border-line px-6 py-10 text-center">
-            <p className="font-medium">Nenhum relatório ainda.</p>
+            <p className="font-medium">Nenhum relatório de {rotuloEscopo(ctx.perfis, ctx.perfilAtual)} ainda.</p>
             <p className="mt-1 text-sm text-muted">O primeiro semanal sai na próxima sexta às 6h. Você também pode gerar um relatório de um período agora.</p>
           </div>
         ) : (
@@ -129,6 +141,7 @@ export default async function ProgressoPage({ searchParams }: { searchParams: Pr
               <div className="grid gap-1">
                 <h3 className="font-display text-2xl font-bold">
                   {escolhido.tipo === "semanal" ? "Semana" : "Período"} de {rotulo(escolhido)}
+                  <span className="ml-2 align-middle text-base font-semibold text-accent-strong">{escopoDe(escolhido)}</span>
                 </h3>
                 <p className="text-xs text-muted">
                   Gerado em {quando.format(new Date(escolhido.gerado_em))}

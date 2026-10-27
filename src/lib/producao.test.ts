@@ -3,7 +3,7 @@ import { comparar, ehFormato2, gargalos, lerRelatorioV2, resumoProducao, rotuloI
 import type { Tarefa } from "./tarefas";
 
 const base: Tarefa = {
-  id: 1, conta_id: 1, titulo: "x", status: "roteirizacao", responsavel: null, vencimento: null, link_roteiro: null, link_drive: null,
+  id: 1, conta_id: 1, titulo: "x", status: "roteirizacao", responsavel: null, perfil_id: null, vencimento: null, link_roteiro: null, link_drive: null,
   data_publicacao: null, ordem: 1, concluida_em: null, publicado_em: null, arquivada_em: null, arquivada_auto: false, restaurada_em: null,
   criado_em: "2026-10-20T00:00:00Z", criado_por: null, atualizado_em: "2026-10-20T00:00:00Z", atualizado_por: null,
 };
@@ -67,6 +67,14 @@ describe("relatório de formato 2", () => {
     expect(g.some((f) => f.includes("2 tarefas atrasadas") && f.includes("Ana"))).toBe(true);
     expect(g).toContain("Entraram tarefas novas no período, mas nenhuma foi concluída.");
     expect(g.some((f) => f.includes("prontas para postar"))).toBe(true);
+  });
+  it("lê escopo e produção por perfil, com padrão seguro para relatórios antigos", () => {
+    expect(r.escopo).toEqual({ tipo: "grupo" });
+    expect(r.producao.por_perfil).toEqual([]);
+    const p = lerRelatorioV2({ ...dados, escopo: { tipo: "perfil", handle: "prefiro", perfil_id: 7 }, producao: { ...dados.producao, por_perfil: [{ id: 7, handle: "prefiro", criadas: 2, publicadas: "1" }, { id: null, handle: null }] } });
+    expect(p.escopo).toEqual({ tipo: "perfil", handle: "prefiro" });
+    expect(p.producao.por_perfil[0]).toEqual({ id: 7, handle: "prefiro", criadas: 2, concluidas: 0, publicadas: 1, pendentes: 0, atrasadas: 0 });
+    expect(p.producao.por_perfil[1].handle).toBeNull();
   });
   it("compara com o relatório anterior", () => {
     const c = comparar(r.producao, { ...r.producao, criadas: 1 });

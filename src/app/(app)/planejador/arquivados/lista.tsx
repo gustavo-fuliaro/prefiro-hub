@@ -2,10 +2,11 @@
 
 import { useMemo, useState } from "react";
 import { IconeBusca } from "@/components/icones";
+import { doPerfil } from "@/lib/perfis-proprios";
 import { dataCurta, type Tarefa } from "@/lib/tarefas";
 import { useAcoesTarefa } from "../acoes";
 import { DetalhesTarefa } from "../detalhes";
-import { botao, campo, ChipStatus, type Contexto, MenuAcoes } from "../ui";
+import { botao, campo, ChipStatus, type Contexto, EtiquetaPerfil, MenuAcoes } from "../ui";
 
 function normalizar(s: string) {
   return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -36,7 +37,8 @@ export function ListaArquivados({ ctx, iniciais }: { ctx: Contexto; iniciais: Ta
   const diaLocal = useMemo(() => new Intl.DateTimeFormat("en-CA", { timeZone: ctx.fuso }), [ctx.fuso]);
 
   const termo = normalizar(busca.trim());
-  const visiveis = tarefas.filter((t) => {
+  const doEscopo = doPerfil(tarefas, ctx.perfilAtual);
+  const visiveis = doEscopo.filter((t) => {
     const dia = diaLocal.format(new Date(t.arquivada_em!));
     return (!termo || normalizar(t.titulo).includes(termo)) && (!de || dia >= de) && (!ate || dia <= ate);
   });
@@ -61,13 +63,13 @@ export function ListaArquivados({ ctx, iniciais }: { ctx: Contexto; iniciais: Ta
 
       <p aria-live="polite" className="min-h-5 text-sm">
         {acoes.erro ? <span className="text-danger">{acoes.erro}</span> : aviso ? <span className="text-ok">{aviso}</span> : (
-          <span className="text-muted">{visiveis.length} de {tarefas.length} arquivadas</span>
+          <span className="text-muted">{visiveis.length} de {doEscopo.length} arquivadas</span>
         )}
       </p>
 
       {visiveis.length === 0 ? (
         <p className="rounded-balao border border-dashed border-line px-6 py-10 text-center text-muted">
-          {tarefas.length ? "Nenhuma arquivada com estes filtros." : "Nenhuma tarefa arquivada ainda."}
+          {doEscopo.length ? "Nenhuma arquivada com estes filtros." : "Nenhuma tarefa arquivada ainda."}
         </p>
       ) : (
         <ul className="grid gap-2">
@@ -78,6 +80,7 @@ export function ListaArquivados({ ctx, iniciais }: { ctx: Contexto; iniciais: Ta
                   {t.titulo}
                 </button>
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
+                  {ctx.perfilAtual === null && ctx.perfis.length > 0 && <EtiquetaPerfil ctx={ctx} perfilId={t.perfil_id} />}
                   <ChipStatus status={t.status} />
                   <span>{t.arquivada_auto ? "Arquivada automaticamente" : "Arquivada"} em {quando.format(new Date(t.arquivada_em!))}</span>
                   {t.data_publicacao && <span>Publicação {dataCurta(t.data_publicacao)}</span>}

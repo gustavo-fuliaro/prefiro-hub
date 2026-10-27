@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { Avatar } from "@/components/avatar";
 import { IconeAnterior, IconeArquivar, IconeProximo } from "@/components/icones";
+import { doPerfil, perfilPorId } from "@/lib/perfis-proprios";
 import type { DiaCalendario } from "@/lib/calendario";
 import { STATUS_LABEL, type Tarefa } from "@/lib/tarefas";
 import { DetalhesTarefa } from "../planejador/detalhes";
@@ -58,7 +60,8 @@ export function CalendarioTarefas({
   const [detalhe, setDetalhe] = useState<number | null>(null);
   const nomes = new Map(ctx.membros.map((m) => [m.user_id, m.nome]));
   const porDia = new Map<string, Tarefa[]>();
-  for (const t of tarefas) if (t.data_publicacao) porDia.set(t.data_publicacao, [...(porDia.get(t.data_publicacao) ?? []), t]);
+  const grupo = ctx.perfilAtual === null && ctx.perfis.length > 0;
+  for (const t of doPerfil(tarefas, ctx.perfilAtual)) if (t.data_publicacao) porDia.set(t.data_publicacao, [...(porDia.get(t.data_publicacao) ?? []), t]);
   const link = (extra: Record<string, string>) => `/calendario?${new URLSearchParams({ mes, visao, ...extra })}`;
   const doMes = [...porDia.entries()].filter(([d]) => d.startsWith(mes)).sort(([a], [b]) => a.localeCompare(b));
 
@@ -66,18 +69,21 @@ export function CalendarioTarefas({
     const e = estadoDe(t);
     const resp = t.responsavel ? (nomes.get(t.responsavel) ?? "Pessoa removida") : "Sem responsável";
     const situacao = e === "arquivado" ? `Arquivado · ${STATUS_LABEL[t.status]}` : STATUS_LABEL[t.status];
+    const perfil = perfilPorId(ctx.perfis, t.perfil_id);
+    const arroba = perfil ? `@${perfil.handle}` : "Sem perfil";
     return (
       <button
         type="button"
         onClick={() => setDetalhe(t.id)}
-        title={`${t.titulo} · ${resp} · ${situacao}`}
+        title={`${grupo ? arroba + " · " : ""}${t.titulo} · ${resp} · ${situacao}`}
         className={`flex w-full min-w-0 items-center gap-1.5 rounded-md border px-1.5 py-1 text-left text-xs transition-colors hover:border-accent ${ESTILO[e]}`}
       >
+        {grupo && (perfil ? <Avatar caminho={perfil.foto_path} handle={perfil.handle} tamanho={16} /> : <span aria-hidden className="size-4 shrink-0 rounded-full border border-dashed border-line-strong" />)}
         {e === "arquivado" && <IconeArquivar className="size-3 shrink-0" />}
         <span className={`truncate ${e === "arquivado" ? "line-through decoration-1" : "font-medium"}`}>{t.titulo}</span>
         {!compacto && (
           <span className="ml-auto shrink-0 text-muted">
-            {resp} · {situacao}
+            {grupo ? `${arroba} · ` : ""}{resp} · {situacao}
           </span>
         )}
       </button>

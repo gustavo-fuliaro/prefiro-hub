@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { SeletorPerfil } from "@/components/seletor-perfil";
 import { contextoTarefas } from "@/lib/dados-tarefas";
+import { rotuloEscopo } from "@/lib/perfis-proprios";
 import { createClient } from "@/lib/supabase/server";
 import { CAMPOS_TAREFA, type Tarefa } from "@/lib/tarefas";
 import { Quadro } from "./quadro";
@@ -29,9 +31,12 @@ export default async function PlanejadorPage({ searchParams }: { searchParams: P
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="font-display text-[2rem] leading-tight font-bold tracking-tight">Planejador</h1>
-          <p className="mt-1 text-muted">A produção de conteúdo do ambiente, do roteiro à publicação. Arraste os cartões entre as etapas.</p>
+          <p className="mt-1 text-muted">
+            {ctx.perfilAtual === null ? "A produção de todos os perfis" : `A produção de ${rotuloEscopo(ctx.perfis, ctx.perfilAtual)}`}, do roteiro à publicação. Arraste os cartões entre as etapas.
+          </p>
         </div>
       </header>
+      <SeletorPerfil perfis={ctx.perfis} atual={ctx.perfilAtual} />
       <Quadro ctx={ctx} iniciais={tarefas ?? []} comentarios={comentarios ?? []} abrir={Number(busca.tarefa) || null} />
     </div>
   );

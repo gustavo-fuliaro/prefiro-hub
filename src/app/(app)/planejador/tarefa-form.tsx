@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Dialogo } from "@/components/dialogo";
+import { perfilPadrao } from "@/lib/perfis-proprios";
 import { criarTarefa, atualizarTarefa } from "@/lib/tarefas-api";
 import { lerData, lerLink, STATUS_LABEL, STATUS_ORDEM, type Status, type Tarefa } from "@/lib/tarefas";
 import { botao, botaoPrimario, campo, type Contexto } from "./ui";
@@ -39,11 +40,13 @@ export function TarefaForm({
     const publicacao = lerData(fd.get("data_publicacao"));
     if (vencimento === false || publicacao === false) return setErro("Confira as datas.");
     const responsavel = String(fd.get("responsavel") ?? "") || null;
+    const perfil = Number(fd.get("perfil_id")) || null;
 
     const dados: Partial<Tarefa> = {
       titulo,
       status: fd.get("status") as Status,
       responsavel,
+      perfil_id: perfil,
       vencimento,
       link_roteiro: linkRoteiro,
       link_drive: linkDrive,
@@ -65,6 +68,17 @@ export function TarefaForm({
           Nome da tarefa
           <input name="titulo" required maxLength={200} autoFocus defaultValue={tarefa?.titulo} className={campo} placeholder="Ex.: Reel sobre carta contemplada" />
         </label>
+        {ctx.perfis.length > 0 && (
+          <label className="grid gap-1 text-sm font-medium">
+            Perfil
+            <select name="perfil_id" defaultValue={String((tarefa ? tarefa.perfil_id : perfilPadrao(ctx.perfis, ctx.perfilAtual)) ?? "")} className={campo}>
+              <option value="">Sem perfil</option>
+              {ctx.perfis.map((p) => (
+                <option key={p.id} value={p.id}>@{p.handle}</option>
+              ))}
+            </select>
+          </label>
+        )}
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="grid gap-1 text-sm font-medium">
             Status

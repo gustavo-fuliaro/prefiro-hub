@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { doPerfil, type PerfilProprio } from "@/lib/perfis-proprios";
 import { resumoProducao } from "@/lib/producao";
 import { aoVivo as aoVivoCanal } from "@/lib/tarefas-api";
 import { STATUS_LABEL, STATUS_ORDEM, type Tarefa } from "@/lib/tarefas";
@@ -12,7 +13,11 @@ export function PainelAoVivo({
   hoje,
   membros,
   iniciais,
+  perfis,
+  perfilAtual,
 }: {
+  perfis: PerfilProprio[];
+  perfilAtual: number | null;
   contaId: number;
   hoje: string;
   membros: { user_id: string; nome: string }[];
@@ -38,7 +43,16 @@ export function PainelAoVivo({
     , setAoVivo);
   }, [contaId]);
 
-  const r = useMemo(() => resumoProducao([...tarefas.values()], hoje, membros), [tarefas, hoje, membros]);
+  const todas = useMemo(() => [...tarefas.values()], [tarefas]);
+  const r = useMemo(() => resumoProducao(doPerfil(todas, perfilAtual), hoje, membros), [todas, perfilAtual, hoje, membros]);
+  // Visão em grupo: a produção de cada perfil lado a lado.
+  const porPerfil = useMemo(() => {
+    if (perfilAtual !== null || perfis.length === 0) return [];
+    const linhas = [...perfis.map((p) => ({ chave: String(p.id), nome: `@${p.handle}`, id: p.id as number | null })), { chave: "sem", nome: "Sem perfil", id: null }];
+    return linhas
+      .map((l) => ({ ...l, r: resumoProducao(todas.filter((t) => (l.id === null ? !perfis.some((p) => p.id === t.perfil_id) : t.perfil_id === l.id)), hoje, membros) }))
+      .filter((l) => l.id !== null || l.r.ativas + l.r.publicadas > 0);
+  }, [todas, perfis, perfilAtual, hoje, membros]);
   const maior = Math.max(1, ...STATUS_ORDEM.map((s) => r.porEtapa[s]));
 
   return (
@@ -59,6 +73,38 @@ export function PainelAoVivo({
         <Kpi rotulo="Agendadas" valor={String(r.agendadas)} />
         <Kpi rotulo="Publicadas" valor={String(r.publicadas)} />
       </div>
+
+      {porPerfil.length > 0 && (
+        <div className="grid content-start gap-3 rounded-balao border border-line bg-surface p-4 shadow-card">
+          <h3 className="font-display text-base font-bold">Por perfil</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[480px] text-sm">
+              <thead className="text-left text-xs text-muted">
+                <tr>
+                  <th className="py-1.5 font-semibold">Perfil</th>
+                  <th className="py-1.5 text-right font-semibold">Ativas</th>
+                  <th className="py-1.5 text-right font-semibold">Em andamento</th>
+                  <th className="py-1.5 text-right font-semibold">Atrasadas</th>
+                  <th className="py-1.5 text-right font-semibold">Agendadas</th>
+                  <th className="py-1.5 text-right font-semibold">Publicadas</th>
+                </tr>
+              </thead>
+              <tbody>
+                {porPerfil.map((l) => (
+                  <tr key={l.chave} className="border-t border-line">
+                    <td className={`py-2 ${l.id ? "font-medium" : "text-muted"}`}>{l.nome}</td>
+                    <td className="py-2 text-right tabular-nums">{l.r.ativas}</td>
+                    <td className="py-2 text-right tabular-nums">{l.r.emAndamento}</td>
+                    <td className={`py-2 text-right tabular-nums ${l.r.atrasadas > 0 ? "font-semibold text-danger" : ""}`}>{l.r.atrasadas}</td>
+                    <td className="py-2 text-right tabular-nums">{l.r.agendadas}</td>
+                    <td className="py-2 text-right tabular-nums">{l.r.publicadas}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="grid content-start gap-3 rounded-balao border border-line bg-surface p-4 shadow-card">

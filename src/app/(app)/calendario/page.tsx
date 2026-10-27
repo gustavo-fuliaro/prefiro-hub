@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SeletorPerfil } from "@/components/seletor-perfil";
 import { deslocarMes, gradeDoMes, lerMes } from "@/lib/calendario";
 import { contextoTarefas } from "@/lib/dados-tarefas";
 import { createClient } from "@/lib/supabase/server";
@@ -34,6 +35,7 @@ export default async function CalendarioPage({ searchParams }: { searchParams: P
         <h1 className="font-display text-[2rem] leading-tight font-bold tracking-tight">Calendário de publicação</h1>
         <p className="mt-1 text-muted">Tarefas do Planejador com data de publicação. Clique numa tarefa para ver os detalhes.</p>
       </header>
+      <SeletorPerfil perfis={ctx.perfis} atual={ctx.perfilAtual} />
       <CalendarioTarefas
         ctx={ctx}
         mes={mes}

@@ -22,6 +22,7 @@ Ferramenta feita para o dia a dia de uma corretora de consórcio 100% digital: u
 
 - Coleta automática diária (06:00), alertas (06:20) e relatório semanal (sexta, 06:00). Tarefas atrasadas e arquivamento automático a cada 15 minutos.
 - Fluxo: Perfis e Comparativo para ler números; Metas e o sino de notificações para acompanhar; Planejador (Kanban ao vivo) e Calendário para produzir; Progresso para a produção ao vivo e os relatórios, impressos ou salvos em PDF; Usuários (admins) para montar a equipe. Briefing, Arsenal de Stories e Iscas Digitais estão bloqueados (em breve).
+- Navegação por perfil: Planejador, Calendário, Progresso, Briefing, Arsenal de Stories e Iscas Digitais têm o mesmo seletor de perfil próprio (individual ou "Todos os perfis"). A escolha vale para todas essas abas e fica lembrada no navegador.
 - Estratégia e Estúdio de IA foram removidos em 26/10/2026 (os dados antigos ficam guardados no banco).
 
 ## Capabilities and Constraints

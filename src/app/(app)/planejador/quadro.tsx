@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   IconeArquivar, IconeBusca, IconeCalendario, IconeCheck, IconeComentario, IconeLapis, IconeMais, IconeRelogio, IconeRestaurar,
 } from "@/components/icones";
+import { doPerfil } from "@/lib/perfis-proprios";
 import { aoVivo as aoVivoCanal, atualizarTarefa } from "@/lib/tarefas-api";
 import {
   colunaDe, COLUNAS, dataCurta, estaAtrasada, estaConcluida, FILTROS_PADRAO, filtrar, ordemEntre, ordenar, STATUS_LABEL, STATUS_ORDEM,
@@ -13,7 +14,7 @@ import {
 import { useAcoesTarefa } from "./acoes";
 import { DetalhesTarefa } from "./detalhes";
 import { TarefaForm } from "./tarefa-form";
-import { botao, botaoPrimario, campo, ChipStatus, type Contexto, Iniciais, MenuAcoes } from "./ui";
+import { botao, botaoPrimario, campo, ChipStatus, type Contexto, EtiquetaPerfil, Iniciais, MenuAcoes } from "./ui";
 
 type Alvo = { coluna: ColunaId; indice: number };
 
@@ -82,7 +83,8 @@ export function Quadro({
 
   const acoes = useAcoesTarefa(ctx, aplicar, remover);
 
-  const lista = useMemo(() => [...tarefas.values()], [tarefas]);
+  // Visão individual: só as tarefas do perfil escolhido. Visão em grupo: todas.
+  const lista = useMemo(() => doPerfil([...tarefas.values()], ctx.perfilAtual), [tarefas, ctx.perfilAtual]);
   const visiveis = useMemo(() => ordenar(filtrar(lista, filtros, ctx.hoje), ordenacao), [lista, filtros, ordenacao, ctx.hoje]);
   const porColuna = useMemo(() => {
     const g = Object.fromEntries(COLUNAS.map((c) => [c.id, [] as Tarefa[]])) as Record<ColunaId, Tarefa[]>;
@@ -340,6 +342,7 @@ function Cartao({
       </div>
 
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-muted">
+        {ctx.perfilAtual === null && ctx.perfis.length > 0 && <EtiquetaPerfil ctx={ctx} perfilId={t.perfil_id} />}
         <ChipStatus status={t.status} />
         {atrasada && <span className="font-semibold text-danger">Atrasada</span>}
         {concluida && t.concluida_em && (

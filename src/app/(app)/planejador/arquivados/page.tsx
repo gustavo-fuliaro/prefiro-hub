@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { IconeAnterior } from "@/components/icones";
+import { SeletorPerfil } from "@/components/seletor-perfil";
 import { contextoTarefas } from "@/lib/dados-tarefas";
 import { createClient } from "@/lib/supabase/server";
 import { CAMPOS_TAREFA, type Tarefa } from "@/lib/tarefas";
@@ -32,6 +33,7 @@ export default async function ArquivadosPage() {
           Tarefas tiradas do quadro. As publicadas vêm para cá sozinhas 7 dias depois da publicação. Comentários e histórico ficam guardados.
         </p>
       </header>
+      <SeletorPerfil perfis={ctx.perfis} atual={ctx.perfilAtual} />
       <ListaArquivados ctx={ctx} iniciais={data ?? []} />
     </div>
   );
