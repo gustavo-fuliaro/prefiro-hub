@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
-export type Papel = "admin" | "estrategista" | "criador" | "leitura";
+export type Papel = "admin" | "estrategista" | "criador" | "vendedor" | "leitura";
 export type Membro = {
   user_id: string;
   nome: string;

@@ -3,8 +3,8 @@
 
 export const SENHA_MIN = 10;
 
-export type Papel = "admin" | "estrategista" | "criador" | "leitura";
-export const PAPEIS: Papel[] = ["admin", "estrategista", "criador", "leitura"];
+export type Papel = "admin" | "estrategista" | "criador" | "vendedor" | "leitura";
+export const PAPEIS: Papel[] = ["admin", "estrategista", "criador", "vendedor", "leitura"];
 // novo_ambiente: a pessoa ganha um ambiente vazio e só dela (só a conta principal faz).
 // equipe: a pessoa entra no ambiente de quem cadastrou e vê os mesmos dados.
 export type Destino = "novo_ambiente" | "equipe";

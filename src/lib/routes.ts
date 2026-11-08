@@ -17,6 +17,7 @@ export const NAV_ITEMS: ItemMenu[] = [
   { href: "/planejador", label: "Planejador" },
   { href: "/calendario", label: "Calendário" },
   { href: "/progresso", label: "Progresso" },
+  { href: "/leads", label: "Leads" },
   { href: "/briefings", label: "Briefing", emBreve: true },
   { href: "/arsenal-de-stories", label: "Arsenal de Stories", emBreve: true },
   { href: "/iscas-digitais", label: "Iscas Digitais", emBreve: true },

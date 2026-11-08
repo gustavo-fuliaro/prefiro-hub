@@ -103,3 +103,11 @@ describe("equipes no mesmo ambiente", () => {
     expect(podeCriar(criadorB, "equipe")).toBe(false);
   });
 });
+
+describe("papel vendedor", () => {
+  it("é aceito ao trocar o papel", () => {
+    expect(lerPedido({ acao: "papel", user_id: "00000000-0000-4000-8000-000000000001", papel: "vendedor" })).toEqual({
+      pedido: { acao: "papel", user_id: "00000000-0000-4000-8000-000000000001", papel: "vendedor" },
+    });
+  });
+});

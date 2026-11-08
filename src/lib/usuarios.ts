@@ -5,13 +5,15 @@ export const PAPEL_ROTULO = {
   admin: "Admin",
   estrategista: "Estrategista",
   criador: "Criador",
+  vendedor: "Vendedor",
   leitura: "Leitura",
 } as const;
 
 export const PAPEL_DESCRICAO = {
   admin: "Tudo, inclusive cadastrar e gerenciar a equipe.",
-  estrategista: "Perfis, metas e tarefas, inclusive excluir tarefas.",
-  criador: "Cria, move e edita tarefas e comenta.",
+  estrategista: "Perfis, metas, tarefas e leads, inclusive excluir e redistribuir.",
+  criador: "Cria, move e edita tarefas e comenta. Também trabalha leads.",
+  vendedor: "Trabalha os leads (cadastra, assume e move os próprios). No resto, só vê.",
   leitura: "Só vê e comenta.",
 } as const;
 

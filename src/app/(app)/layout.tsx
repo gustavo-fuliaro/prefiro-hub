@@ -12,7 +12,7 @@ import { Notificacoes, type Notificacao } from "./notificacoes";
 // A AGPL pede que quem usa o app pela internet consiga chegar ao código. Quem fizer um fork deve trocar este endereço.
 const CODIGO_FONTE = process.env.NEXT_PUBLIC_CODIGO_FONTE_URL || "https://github.com/gustavo-fuliaro/prefiro-hub";
 
-const PAPEL_LABEL = { admin: "Admin", estrategista: "Estrategista", criador: "Criador", leitura: "Leitura" };
+const PAPEL_LABEL = { admin: "Admin", estrategista: "Estrategista", criador: "Criador", vendedor: "Vendedor", leitura: "Leitura" };
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const { email, membro } = await membroAtual();
