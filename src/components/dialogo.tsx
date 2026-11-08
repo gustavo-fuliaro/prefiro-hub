@@ -20,7 +20,11 @@ export function Dialogo({
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const d = ref.current;
-    if (d && !d.open) d.showModal();
+    if (d && !d.open) {
+      d.showModal();
+      // O showModal põe o foco no primeiro botão (o "fechar"); o certo é começar pelo primeiro campo.
+      d.querySelector<HTMLElement>("form input:not([type=hidden]):not([type=radio]):not([disabled]), form textarea, form select")?.focus();
+    }
   }, []);
 
   return (

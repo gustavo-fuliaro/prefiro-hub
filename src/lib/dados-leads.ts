@@ -15,6 +15,7 @@ export type ContextoLeads = {
   perfis: PerfilProprio[];
   perfilAtual: number | null;
   perm: PermissaoLeads;
+  editaFormularios: boolean; // admin, estrategista e criador
   pipeline: Pipeline;
   etapas: Etapa[];
 };
@@ -42,6 +43,7 @@ export async function contextoLeads(): Promise<ContextoLeads | null> {
     perfis: escolha.perfis,
     perfilAtual: escolha.perfilAtual,
     perm: papelLeads(membro.super_admin ? "admin" : membro.papel, membro.user_id),
+    editaFormularios: membro.super_admin || ["admin", "estrategista", "criador"].includes(membro.papel),
     pipeline,
     etapas: etapas ?? [],
   };

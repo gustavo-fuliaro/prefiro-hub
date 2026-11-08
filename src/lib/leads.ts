@@ -239,7 +239,7 @@ export function papelDaColuna(c: ColunaRascunho, indice: number): PapelEtapa {
 export type EventoLead = {
   id: number;
   lead_id: number;
-  tipo: "criado" | "etapa" | "assumido" | "responsavel" | "expirado" | "perfil" | "prioridade";
+  tipo: "criado" | "etapa" | "assumido" | "responsavel" | "expirado" | "perfil" | "prioridade" | "formulario";
   de: string | null;
   para: string | null;
   detalhe: string | null;
@@ -262,6 +262,8 @@ export function descreverEventoLead(e: EventoLead, nomes: Map<string, string>): 
       return `trocou o responsável de ${pessoa(e.de)} para ${pessoa(e.para)}`;
     case "perfil":
       return `trocou o perfil de ${e.de ? "@" + e.de : "nenhum"} para ${e.para ? "@" + e.para : "nenhum"}`;
+    case "formulario":
+      return e.detalhe === "entrou" ? `entrou pelo formulário "${e.para ?? "?"}"` : `respondeu o formulário "${e.para ?? "?"}"`;
     case "prioridade":
       return `mudou a prioridade de ${PRIORIDADE_LABEL[e.de as Prioridade] ?? e.de} para ${PRIORIDADE_LABEL[e.para as Prioridade] ?? e.para}`;
   }

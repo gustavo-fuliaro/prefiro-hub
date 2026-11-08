@@ -1,5 +1,5 @@
-// Rotas que não exigem login.
-const PUBLIC_PATHS = ["/login"];
+// Rotas que não exigem login. /f/... é o formulário público (iscas digitais).
+const PUBLIC_PATHS = ["/login", "/f"];
 
 export function isPublicPath(path: string): boolean {
   return PUBLIC_PATHS.some((p) => path === p || path.startsWith(p + "/"));
@@ -20,7 +20,7 @@ export const NAV_ITEMS: ItemMenu[] = [
   { href: "/leads", label: "Leads" },
   { href: "/briefings", label: "Briefing", emBreve: true },
   { href: "/arsenal-de-stories", label: "Arsenal de Stories", emBreve: true },
-  { href: "/iscas-digitais", label: "Iscas Digitais", emBreve: true },
+  { href: "/iscas-digitais", label: "Iscas Digitais" },
   { href: "/usuarios", label: "Usuários", soAdmin: true },
 ];
 

@@ -142,5 +142,6 @@ describe("histórico", () => {
     expect(descreverEventoLead({ ...base, tipo: "etapa", de: "Novo", para: "Qualificado", detalhe: "Quer carta" }, new Map())).toBe("moveu de Novo para Qualificado (motivo: Quer carta)");
     expect(descreverEventoLead({ ...base, tipo: "expirado", de: "Follow-up" }, new Map())).toContain("voltou para a Base Geral");
     expect(descreverEventoLead({ ...base, tipo: "prioridade", de: "normal", para: "alta" }, new Map())).toBe("mudou a prioridade de Normal para Alta");
+    expect(descreverEventoLead({ ...base, tipo: "formulario", para: "Simulador", detalhe: "entrou" }, new Map())).toBe('entrou pelo formulário "Simulador"');
   });
 });
